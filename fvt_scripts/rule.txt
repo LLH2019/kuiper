@@ -1,0 +1,11 @@
+{
+  "sql": "SELECT * from demo where temperature>50",
+  "actions": [
+    {
+      "file": {
+        "path": "/home/llh/out/result.txt",
+        "interval": 5000
+      }
+    }
+  ]
+}

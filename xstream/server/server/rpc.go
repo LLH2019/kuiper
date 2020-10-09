@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/emqx/kuiper/common"
 	"github.com/emqx/kuiper/plugins"
+	"github.com/emqx/kuiper/xstream/nodes"
 	"github.com/emqx/kuiper/xstream/sinks"
 	"strings"
 	"time"
@@ -14,6 +15,76 @@ import (
 const QUERY_RULE_ID = "internal-xstream_query_rule"
 
 type Server int
+
+func (t *Server) CreateEtl(args string, reply *string)  error{
+	fmt.Println("args:", args)
+	tp, inputs,_ := ruleProcessor.HandleETLTopo()
+	//tp.AddSink(inputs, nodes.NewSinkNode("sink_memory_log", "logToMemory", nil))
+	props1 := map[string]interface{}{"interval":5000, "path":"/home/llh/out/result.txt"}
+	tp.AddSink(inputs, nodes.NewSinkNode(fmt.Sprintf("%s_%d", "file", 0), "file", props1))
+
+	props2 := map[string]interface{}{
+		"server": "tcp://127.0.0.1:1883",
+		"topic": "devices/demo_001/messages/events2",
+		"protocolVersion": "3.1",
+		"retained": false}
+	tp.AddSink(inputs, nodes.NewSinkNode(fmt.Sprintf("%s_%d", "mqtt", 1), "mqtt", props2))
+
+	rs := &RuleState{
+		Name: "etl",
+	}
+	rs.Topology = tp
+	rs.Triggered = true
+	err := doStartRule(rs)
+	if err != nil {
+		return err
+	}
+
+	//go func() {
+	//	select {
+	//	case err := <-tp.Open():
+	//		log.Infof("closing query for error: %v", err)
+	//		tp.GetContext().SetError(err)
+	//		tp.Cancel()
+	//	}
+	//}()
+	msg := fmt.Sprintf("CreateETLTopo was submit successfully.")
+	logger.Println(msg)
+	*reply = fmt.Sprintf(msg)
+	return nil
+}
+
+func (t *Server) CreateEtl2(args string, reply *string)  error{
+	fmt.Println("args:", args)
+	tp, inputs,_ := ruleProcessor.HandleETLTopo2()
+	props1 := map[string]interface{}{"interval":5000, "path":"/home/llh/out/result.txt"}
+	tp.AddSink(inputs, nodes.NewSinkNode(fmt.Sprintf("%s_%d", "file", 0), "file", props1))
+
+	props2 := map[string]interface{}{
+		"server": "tcp://127.0.0.1:1883",
+		"topic": "devices/demo_001/messages/events2",
+		"protocolVersion": "3.1",
+		"retained": false}
+	tp.AddSink(inputs, nodes.NewSinkNode(fmt.Sprintf("%s_%d", "mqtt", 1), "mqtt", props2))
+
+	rs := &RuleState{
+		Name: "etl2",
+	}
+	rs.Topology = tp
+	rs.Triggered = true
+	err := doStartRule(rs)
+	if err != nil {
+		return err
+	}
+	msg := fmt.Sprintf("CreateETLTopo was submit successfully.")
+	logger.Println(msg)
+	*reply = fmt.Sprintf(msg)
+	return nil
+}
+
+func (t *Server) WordCount(reply *string) error {
+	return nil
+}
 
 func (t *Server) CreateQuery(sql string, reply *string) error {
 	if _, ok := registry.Load(QUERY_RULE_ID); ok {

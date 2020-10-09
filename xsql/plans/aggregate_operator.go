@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/emqx/kuiper/xsql"
 	"github.com/emqx/kuiper/xstream/api"
+	"github.com/emqx/kuiper/xstream/nodes"
 )
 
 type AggregatePlan struct {
@@ -15,7 +16,7 @@ type AggregatePlan struct {
  *  input: *xsql.Tuple from preprocessor | xsql.WindowTuplesSet from windowOp | xsql.JoinTupleSets from joinOp
  *  output: xsql.GroupedTuplesSet
  */
-func (p *AggregatePlan) Apply(ctx api.StreamContext, data interface{}, fv *xsql.FunctionValuer, afv *xsql.AggregateFunctionValuer) interface{} {
+func (p *AggregatePlan) Apply(ctx api.StreamContext, data interface{}, fv *xsql.FunctionValuer, afv *xsql.AggregateFunctionValuer, Oc *nodes.OutputController) interface{} {
 	log := ctx.GetLogger()
 	log.Debugf("aggregate plan receive %s", data)
 	grouped := data

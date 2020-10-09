@@ -254,4 +254,5 @@ func main() {
 			pubToMQTT(os.Args[2])
 		}
 	}
+	fmt.Println("done!")
 }

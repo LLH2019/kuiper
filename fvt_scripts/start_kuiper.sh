@@ -3,9 +3,9 @@ set -e
 
 ver=`git describe --tags --always`
 os=`uname -s | tr "[A-Z]" "[a-z]"`
-base_dir=_build/kuiper-"$ver"-"$os"-x86_64
-
-rm -rf $base_dir/data/*
+#base_dir=_build/kuiper-"$ver"-"$os"-x86_64
+base_dir=../_build/kuiper-"$ver"-"$os"-amd64
+sudo rm -rf $base_dir/data/*
 ls -l $base_dir/bin/server
 
 cd $base_dir/

@@ -663,6 +663,7 @@ const (
 	BOOLEAN
 	ARRAY
 	STRUCT
+	INT64
 )
 
 var dataTypes = []string{
@@ -673,6 +674,7 @@ var dataTypes = []string{
 	BOOLEAN:  "boolean",
 	ARRAY:    "array",
 	STRUCT:   "struct",
+	INT64:	"int64",
 }
 
 func (d DataType) isSimpleType() bool {

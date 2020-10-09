@@ -6,6 +6,8 @@ import (
 	"github.com/emqx/kuiper/common"
 	"github.com/emqx/kuiper/xsql"
 	"github.com/emqx/kuiper/xstream/api"
+	"github.com/emqx/kuiper/xstream/nodes"
+	"reflect"
 	"strconv"
 	"strings"
 )
@@ -21,15 +23,18 @@ type ProjectPlan struct {
  *  input: *xsql.Tuple from preprocessor or filterOp | xsql.WindowTuplesSet from windowOp or filterOp | xsql.JoinTupleSets from joinOp or filterOp
  *  output: []map[string]interface{}
  */
-func (pp *ProjectPlan) Apply(ctx api.StreamContext, data interface{}, fv *xsql.FunctionValuer, afv *xsql.AggregateFunctionValuer) interface{} {
+func (pp *ProjectPlan) Apply(ctx api.StreamContext, data interface{}, fv *xsql.FunctionValuer, afv *xsql.AggregateFunctionValuer, Oc *nodes.OutputController) interface{} {
 	log := ctx.GetLogger()
 	log.Debugf("project plan receive %s", data)
+	fmt.Println("projectPlan apply pre data is ", data)
 	var results []map[string]interface{}
 	switch input := data.(type) {
 	case error:
 		return input
 	case *xsql.Tuple:
 		ve := pp.getVE(input, input, fv, afv)
+		fmt.Println("vvvvve ",ve, reflect.TypeOf(ve))
+		fmt.Println("input ", input)
 		if r, err := project(pp.Fields, ve, pp.isTest); err != nil {
 			return fmt.Errorf("run Select error: %s", err)
 		} else {
@@ -80,6 +85,7 @@ func (pp *ProjectPlan) Apply(ctx api.StreamContext, data interface{}, fv *xsql.F
 		return fmt.Errorf("run Select error: invalid input %[1]T(%[1]v)", input)
 	}
 
+	fmt.Println("projectPlan apply post data is ", results)
 	if ret, err := json.Marshal(results); err == nil {
 		return ret
 	} else {
@@ -161,4 +167,8 @@ func assignName(name, alias string, fields map[string]interface{}) string {
 	}
 	fmt.Printf("Cannot assign a default field name")
 	return ""
+}
+
+func (p *ProjectPlan) Prepare(){
+
 }

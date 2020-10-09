@@ -474,7 +474,7 @@ func (p *RuleProcessor) createTopoWithSources(rule *api.Rule, sources []*nodes.S
 		if selectStmt, ok := stmt.(*xsql.SelectStatement); !ok {
 			return nil, nil, fmt.Errorf("SQL %s is not a select statement.", sql)
 		} else {
-			tp, err := xstream.NewWithNameAndQos(name, rule.Options.Qos, rule.Options.CheckpointInterval)
+			var tp, err = xstream.NewWithNameAndQos(name, rule.Options.Qos, rule.Options.CheckpointInterval)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -546,52 +546,211 @@ func (p *RuleProcessor) createTopoWithSources(rule *api.Rule, sources []*nodes.S
 				}
 			}
 
-			if w != nil && selectStmt.Joins != nil {
-				joinOp := xstream.Transform(&plans.JoinPlan{Joins: selectStmt.Joins, From: selectStmt.Sources[0].(*xsql.Table)}, "join", rule.Options.BufferLength)
-				joinOp.SetConcurrency(rule.Options.Concurrency)
-				tp.AddOperator(inputs, joinOp)
-				inputs = []api.Emitter{joinOp}
-			}
-
-			if selectStmt.Condition != nil {
-				filterOp := xstream.Transform(&plans.FilterPlan{Condition: selectStmt.Condition}, "filter", rule.Options.BufferLength)
-				filterOp.SetConcurrency(rule.Options.Concurrency)
-				tp.AddOperator(inputs, filterOp)
-				inputs = []api.Emitter{filterOp}
-			}
-
-			var ds xsql.Dimensions
-			if dimensions != nil || len(aggregateAlias) > 0 {
-				ds = dimensions.GetGroups()
-				if (ds != nil && len(ds) > 0) || len(aggregateAlias) > 0 {
-					aggregateOp := xstream.Transform(&plans.AggregatePlan{Dimensions: ds, Alias: aggregateAlias}, "aggregate", rule.Options.BufferLength)
-					aggregateOp.SetConcurrency(rule.Options.Concurrency)
-					tp.AddOperator(inputs, aggregateOp)
-					inputs = []api.Emitter{aggregateOp}
-				}
-			}
-
-			if selectStmt.Having != nil {
-				havingOp := xstream.Transform(&plans.HavingPlan{selectStmt.Having}, "having", rule.Options.BufferLength)
-				havingOp.SetConcurrency(rule.Options.Concurrency)
-				tp.AddOperator(inputs, havingOp)
-				inputs = []api.Emitter{havingOp}
-			}
-
-			if selectStmt.SortFields != nil {
-				orderOp := xstream.Transform(&plans.OrderPlan{SortFields: selectStmt.SortFields}, "order", rule.Options.BufferLength)
-				orderOp.SetConcurrency(rule.Options.Concurrency)
-				tp.AddOperator(inputs, orderOp)
-				inputs = []api.Emitter{orderOp}
-			}
-
-			if selectStmt.Fields != nil {
-				projectOp := xstream.Transform(&plans.ProjectPlan{Fields: selectStmt.Fields, IsAggregate: xsql.IsAggStatement(selectStmt), SendMeta: rule.Options.SendMetaToSink}, "project", rule.Options.BufferLength)
-				projectOp.SetConcurrency(rule.Options.Concurrency)
-				tp.AddOperator(inputs, projectOp)
-				inputs = []api.Emitter{projectOp}
-			}
+			//if w != nil && selectStmt.Joins != nil {
+			//	joinOp := xstream.Transform(&plans.JoinPlan{Joins: selectStmt.Joins, From: selectStmt.Sources[0].(*xsql.Table)}, "join", rule.Options.BufferLength)
+			//	joinOp.SetConcurrency(rule.Options.Concurrency)
+			//	tp.AddOperator(inputs, joinOp)
+			//	inputs = []api.Emitter{joinOp}
+			//}
+			//
+			//if selectStmt.Condition != nil {
+			//	filterOp := xstream.Transform(&plans.FilterPlan{Condition: selectStmt.Condition}, "filter", rule.Options.BufferLength)
+			//	filterOp.SetConcurrency(rule.Options.Concurrency)
+			//	tp.AddOperator(inputs, filterOp)
+			//	inputs = []api.Emitter{filterOp}
+			//}
+			//
+			//var ds xsql.Dimensions
+			//if dimensions != nil || len(aggregateAlias) > 0 {
+			//	ds = dimensions.GetGroups()
+			//	if (ds != nil && len(ds) > 0) || len(aggregateAlias) > 0 {
+			//		aggregateOp := xstream.Transform(&plans.AggregatePlan{Dimensions: ds, Alias: aggregateAlias}, "aggregate", rule.Options.BufferLength)
+			//		aggregateOp.SetConcurrency(rule.Options.Concurrency)
+			//		tp.AddOperator(inputs, aggregateOp)
+			//		inputs = []api.Emitter{aggregateOp}
+			//	}
+			//}
+			//
+			//if selectStmt.Having != nil {
+			//	havingOp := xstream.Transform(&plans.HavingPlan{selectStmt.Having}, "having", rule.Options.BufferLength)
+			//	havingOp.SetConcurrency(rule.Options.Concurrency)
+			//	tp.AddOperator(inputs, havingOp)
+			//	inputs = []api.Emitter{havingOp}
+			//}
+			//
+			//if selectStmt.SortFields != nil {
+			//	orderOp := xstream.Transform(&plans.OrderPlan{SortFields: selectStmt.SortFields}, "order", rule.Options.BufferLength)
+			//	orderOp.SetConcurrency(rule.Options.Concurrency)
+			//	tp.AddOperator(inputs, orderOp)
+			//	inputs = []api.Emitter{orderOp}
+			//}
+			//
+			//if selectStmt.Fields != nil {
+			//	projectOp := xstream.Transform(&plans.ProjectPlan{Fields: selectStmt.Fields, IsAggregate: xsql.IsAggStatement(selectStmt), SendMeta: rule.Options.SendMetaToSink}, "project", rule.Options.BufferLength)
+			//	projectOp.SetConcurrency(rule.Options.Concurrency)
+			//	tp.AddOperator(inputs, projectOp)
+			//	inputs = []api.Emitter{projectOp}
+			//}
 			return tp, inputs, nil
 		}
 	}
+}
+
+
+func (p *RuleProcessor) HandleETLTopo()(*xstream.TopologyNew,[]api.Emitter, error)  {
+	tp,err := xstream.NewWithNameAndQos("rule1", 0, 300000)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var inputs []api.Emitter
+
+	//创造sourceNode
+
+	streamField1 := xsql.StreamField{Name: "temperature", FieldType: &xsql.BasicType{xsql.DataType(xsql.FLOAT)}}
+	streamField2 := xsql.StreamField{Name: "humidity", FieldType: &xsql.BasicType{xsql.DataType(xsql.FLOAT)}}
+	streamFields := xsql.StreamFields{streamField1, streamField2}
+
+	operations := xsql.Options{"FORMAT":"JSON", "DATASOURCE":"devices/+/messages"}
+
+	streamStmt := &xsql.StreamStmt{
+		Name:				"demo",
+		StreamFields: streamFields,
+		Options: operations,
+
+	}
+	pp,err := plans.NewPreprocessor(streamStmt, nil, false)
+	if err != nil {
+		return nil, nil,err
+	}
+	s := "demo"
+	var srcNode *nodes.SourceNode
+	node := nodes.NewSourceNode(s, streamStmt.Options)
+	srcNode = node
+
+	tp.AddSrc(srcNode)
+	preprocessorOp := xstream.Transform(pp, "preprocessor_"+s, 1024)
+	preprocessorOp.SetConcurrency(1)
+	tp.AddOperator([]api.Emitter{srcNode}, preprocessorOp)
+	inputs = append(inputs, preprocessorOp)
+
+
+	//增加一个FILTER算子
+
+	projectOp2 := xstream.Transform(&plans.RangeFilterPlan{Key: "humidity", Min: 10, Max: 30}, "project", 1024)
+	projectOp2.SetConcurrency(1)
+	tp.AddOperator(inputs, projectOp2)
+	inputs = []api.Emitter{projectOp2}
+
+	// 增加一个SELECT算子
+	field1 := xsql.Field{Name: "", AName: "", Expr: &xsql.Wildcard{Token: xsql.SELECT}}
+	table := xsql.Table{Name: "demo", Alias: ""}
+	selectStmt := &xsql.SelectStatement{xsql.Fields{field1},
+		xsql.Sources{&table}, xsql.Joins{}, xsql.Expr(nil),
+		xsql.Dimensions{}, xsql.Expr(nil), xsql.SortFields(nil)}
+
+	projectOp := xstream.Transform(&plans.ProjectPlan{Fields: selectStmt.Fields, IsAggregate: xsql.IsAggStatement(selectStmt), SendMeta: false}, "project", 1024)
+	projectOp.SetConcurrency(1)
+	tp.AddOperator(inputs, projectOp)
+	inputs = []api.Emitter{projectOp}
+
+	return tp,inputs,nil
+
+}
+
+
+func (p *RuleProcessor) HandleETLTopo2()(*xstream.TopologyNew,[]api.Emitter, error)  {
+	tp,err := xstream.NewWithNameAndQos("etl2", 0, 300000)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var inputs []api.Emitter
+
+	//创造sourceNode
+
+	//streamField1 := xsql.StreamField{Name: "temperature", FieldType: &xsql.BasicType{xsql.DataType(xsql.FLOAT)}}
+	//streamField2 := xsql.StreamField{Name: "humidity", FieldType: &xsql.BasicType{xsql.DataType(xsql.FLOAT)}}
+	//streamField3 := xsql.StreamField{Name: "airquality_raw", FieldType: &xsql.BasicType{xsql.DataType(xsql.BIGINT)}}
+	//streamField4 := xsql.StreamField{Name: "dust", FieldType: &xsql.BasicType{xsql.DataType(xsql.FLOAT)}}
+	//streamField5 := xsql.StreamField{Name: "latitude", FieldType: &xsql.BasicType{xsql.DataType(xsql.FLOAT)}}
+	//streamField6 := xsql.StreamField{Name: "light", FieldType: &xsql.BasicType{xsql.DataType(xsql.BIGINT)}}
+	//streamField7 := xsql.StreamField{Name: "longitude", FieldType: &xsql.BasicType{xsql.DataType(xsql.FLOAT)}}
+	//streamField8 := xsql.StreamField{Name: "sensorId", FieldType: &xsql.BasicType{xsql.DataType(xsql.BIGINT)}}
+	//streamField9 := xsql.StreamField{Name: "source", FieldType: &xsql.BasicType{xsql.DataType(xsql.STRINGS)}}
+
+	streamField10 := xsql.StreamField{Name: "msgId", FieldType: &xsql.BasicType{xsql.DataType(xsql.STRINGS)}}
+	streamField11:= xsql.StreamField{Name: "payload", FieldType: &xsql.BasicType{xsql.DataType(xsql.STRINGS)}}
+	//streamFields := xsql.StreamFields{streamField1, streamField2, streamField3,streamField4, streamField5, streamField6, streamField7,streamField8,streamField9}
+	streamFields := xsql.StreamFields{streamField10, streamField11}
+	operations := xsql.Options{"FORMAT":"JSON", "DATASOURCE":"devices/+/messages", "TYPE": "etlfile"}
+
+	streamStmt := &xsql.StreamStmt{
+		Name:				"demo",
+		StreamFields: streamFields,
+		Options: operations,
+
+	}
+	//_,err := plans.NewPreprocessor(streamStmt, nil, false)
+	if err != nil {
+		return nil, nil,err
+	}
+	s := "demo"
+	var srcNode *nodes.SourceNode
+
+	node := nodes.NewSourceNode(s, streamStmt.Options)
+	srcNode = node
+
+	tp.AddSrc(srcNode)
+	inputs = []api.Emitter{srcNode}
+	//preprocessorOp := xstream.Transform(pp, "preprocessor_"+s, 1024)
+	//preprocessorOp.SetConcurrency(1)
+	//tp.AddOperator([]api.Emitter{srcNode}, preprocessorOp)
+	//inputs = append(inputs, preprocessorOp)
+
+	field11 := xsql.Field{Name: "", AName: "", Expr: &xsql.Wildcard{Token: xsql.SELECT}}
+	table1 := xsql.Table{Name: "demo", Alias: ""}
+	selectStmt1 := &xsql.SelectStatement{xsql.Fields{field11},
+		xsql.Sources{&table1}, xsql.Joins{}, xsql.Expr(nil),
+		xsql.Dimensions{}, xsql.Expr(nil), xsql.SortFields(nil)}
+
+	// senMlParse 算子
+	senMlParseOp := xstream.Transform(&plans.SenMLParsePlan{Fields: selectStmt1.Fields, IsAggregate: xsql.IsAggStatement(selectStmt1), SendMeta: false}, "project", 1024)
+	senMlParseOp.SetConcurrency(1)
+	tp.AddOperator(inputs, senMlParseOp)
+	inputs = []api.Emitter{senMlParseOp}
+
+
+	// etlJoin 算子
+	etlJoinOp := xstream.Transform(&plans.EtlJoinPlan{Fields: selectStmt1.Fields, IsAggregate: xsql.IsAggStatement(selectStmt1), SendMeta: false, MaxCountPossible: 6, MsgIdCountMap: make(map[string]map[string]string)}, "project", 1024)
+	etlJoinOp.SetConcurrency(1)
+	tp.AddOperator(inputs, etlJoinOp)
+	inputs = []api.Emitter{etlJoinOp}
+
+	// annotationOp 算子
+	annotationOp := xstream.Transform(&plans.AnnotationPlan{Fields: selectStmt1.Fields, IsAggregate: xsql.IsAggStatement(selectStmt1), SendMeta: false, MaxCountPossible: 6, MsgIdCountMap: make(map[string]map[string]string)}, "project", 1024)
+	annotationOp.SetConcurrency(1)
+	tp.AddOperator(inputs, annotationOp)
+	inputs = []api.Emitter{annotationOp}
+
+	csvToSenMlOp := xstream.Transform(&plans.CsvToSenMLPlan{Fields: selectStmt1.Fields, IsAggregate: xsql.IsAggStatement(selectStmt1), SendMeta: false, MaxCountPossible: 6, MsgIdCountMap: make(map[string]map[string]string)}, "project", 1024)
+	csvToSenMlOp.SetConcurrency(1)
+	tp.AddOperator(inputs, csvToSenMlOp)
+	inputs = []api.Emitter{csvToSenMlOp}
+
+
+	////增加一个算子
+	//field1 := xsql.Field{Name: "", AName: "", Expr: &xsql.Wildcard{Token: xsql.SELECT}}
+	//table := xsql.Table{Name: "demo", Alias: ""}
+	//selectStmt := &xsql.SelectStatement{xsql.Fields{field1},
+	//	xsql.Sources{&table}, xsql.Joins{}, xsql.Expr(nil),
+	//	xsql.Dimensions{}, xsql.Expr(nil), xsql.SortFields(nil)}
+	//
+	//projectOp := xstream.Transform(&plans.ProjectPlan{Fields: selectStmt.Fields, IsAggregate: xsql.IsAggStatement(selectStmt), SendMeta: false}, "project", 1024)
+	//projectOp.SetConcurrency(1)
+	//tp.AddOperator(inputs, projectOp)
+	//inputs = []api.Emitter{projectOp}
+
+	return tp,inputs,nil
+
 }

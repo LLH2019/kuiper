@@ -134,7 +134,7 @@ func main() {
 		{
 			Name:    "create",
 			Aliases: []string{"create"},
-			Usage:   "create stream $stream_name | create stream $stream_name -f $stream_def_file | create rule $rule_name $rule_json | create rule $rule_name -f $rule_def_file | create plugin $plugin_type $plugin_name $plugin_json | create plugin $plugin_type $plugin_name -f $plugin_def_file",
+			Usage:   "create stream $stream_name | create stream $stream_name -f $stream_def_file | create rule $rule_name $rule_json | create rule $rule_name -f $rule_def_file |create topo | create plugin $plugin_type $plugin_name $plugin_json | create plugin $plugin_type $plugin_name -f $plugin_def_file",
 
 			Subcommands: []cli.Command{
 				{
@@ -213,6 +213,45 @@ func main() {
 							}
 							return nil
 						}
+					},
+				},
+				{
+					Name:  "topo",
+					Usage: "create topo",
+					Flags: []cli.Flag{
+
+					},
+					Action: func(c *cli.Context) error {
+								var reply string
+								err = client.Call("Server.CreateEtl", "", &reply)
+								if err != nil {
+									fmt.Println(err)
+								} else {
+									fmt.Println(reply)
+								}
+
+							return nil
+
+					},
+				},
+
+				{
+					Name:  "topo2",
+					Usage: "create topo2",
+					Flags: []cli.Flag{
+
+					},
+					Action: func(c *cli.Context) error {
+						var reply string
+						err = client.Call("Server.CreateEtl2", "", &reply)
+						if err != nil {
+							fmt.Println(err)
+						} else {
+							fmt.Println(reply)
+						}
+
+						return nil
+
 					},
 				},
 				{

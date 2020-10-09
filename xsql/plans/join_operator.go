@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/emqx/kuiper/xsql"
 	"github.com/emqx/kuiper/xstream/api"
+	"github.com/emqx/kuiper/xstream/nodes"
 )
 
 //TODO join expr should only be the equal op between 2 streams like tb1.id = tb2.id
@@ -14,7 +15,7 @@ type JoinPlan struct {
 
 // input:  xsql.WindowTuplesSet from windowOp, window is required for join
 // output: xsql.JoinTupleSets
-func (jp *JoinPlan) Apply(ctx api.StreamContext, data interface{}, fv *xsql.FunctionValuer, _ *xsql.AggregateFunctionValuer) interface{} {
+func (jp *JoinPlan) Apply(ctx api.StreamContext, data interface{}, fv *xsql.FunctionValuer, _ *xsql.AggregateFunctionValuer, Oc *nodes.OutputController) interface{} {
 	log := ctx.GetLogger()
 	var input xsql.WindowTuplesSet
 	switch v := data.(type) {

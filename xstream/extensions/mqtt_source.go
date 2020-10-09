@@ -165,6 +165,7 @@ func subscribe(topic string, client MQTT.Client, ctx api.StreamContext, consumer
 			log.Errorf("Invalid data format, cannot convert %s into JSON with error %s", string(msg.Payload()), e)
 			return
 		}
+		fmt.Println("result: ", result)
 
 		meta := make(map[string]interface{})
 		meta["topic"] = msg.Topic()

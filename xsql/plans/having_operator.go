@@ -4,13 +4,14 @@ import (
 	"fmt"
 	"github.com/emqx/kuiper/xsql"
 	"github.com/emqx/kuiper/xstream/api"
+	"github.com/emqx/kuiper/xstream/nodes"
 )
 
 type HavingPlan struct {
 	Condition xsql.Expr
 }
 
-func (p *HavingPlan) Apply(ctx api.StreamContext, data interface{}, fv *xsql.FunctionValuer, afv *xsql.AggregateFunctionValuer) interface{} {
+func (p *HavingPlan) Apply(ctx api.StreamContext, data interface{}, fv *xsql.FunctionValuer, afv *xsql.AggregateFunctionValuer, Oc *nodes.OutputController) interface{} {
 	log := ctx.GetLogger()
 	log.Debugf("having plan receive %s", data)
 	switch input := data.(type) {

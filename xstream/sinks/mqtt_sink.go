@@ -184,7 +184,15 @@ func (ms *MQTTSink) Open(ctx api.StreamContext) error {
 	return nil
 }
 
+type Res struct {
+	Rt interface{} `json: "demo"`
+}
+
 func (ms *MQTTSink) Collect(ctx api.StreamContext, item interface{}) error {
+	//var results []map[string]interface{}
+	//json.Unmarshal(item.([]byte), strs)
+	//fmt.Println("mqtt...........", item, string(item.([]byte)[:]))
+	//fmt.Println("res ", res)
 	logger := ctx.GetLogger()
 	c := ms.conn
 	logger.Debugf("%s publish %s", ctx.GetOpId(), item)

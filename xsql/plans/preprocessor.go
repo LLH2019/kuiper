@@ -6,6 +6,7 @@ import (
 	"github.com/emqx/kuiper/common"
 	"github.com/emqx/kuiper/xsql"
 	"github.com/emqx/kuiper/xstream/api"
+	"github.com/emqx/kuiper/xstream/nodes"
 	"math"
 	"reflect"
 	"strconv"
@@ -41,9 +42,10 @@ func NewPreprocessor(s *xsql.StreamStmt, fs xsql.Fields, iet bool) (*Preprocesso
  *	input: *xsql.Tuple
  *	output: *xsql.Tuple
  */
-func (p *Preprocessor) Apply(ctx api.StreamContext, data interface{}, fv *xsql.FunctionValuer, _ *xsql.AggregateFunctionValuer) interface{} {
+func (p *Preprocessor) Apply(ctx api.StreamContext, data interface{}, fv *xsql.FunctionValuer, _ *xsql.AggregateFunctionValuer, Oc *nodes.OutputController) interface{} {
 	log := ctx.GetLogger()
 	tuple, ok := data.(*xsql.Tuple)
+	fmt.Println("preprocessor apply pre data is : ",data, "type is:", reflect.TypeOf(data))
 	if !ok {
 		return fmt.Errorf("expect tuple data type")
 	}
@@ -86,6 +88,7 @@ func (p *Preprocessor) Apply(ctx api.StreamContext, data interface{}, fv *xsql.F
 			return fmt.Errorf("cannot find timestamp field %s in tuple %v", p.timestampField, result)
 		}
 	}
+	fmt.Println("preprocessor apply result is: ", tuple , "type is:", reflect.TypeOf(data))
 	return tuple
 }
 
@@ -416,4 +419,9 @@ func (p *Preprocessor) addArrayField(ft *xsql.ArrayType, srcSlice []interface{})
 			return nil, fmt.Errorf("invalid data type for %T", ft.Type)
 		}
 	}
+}
+
+
+func (p *Preprocessor) Prepare(){
+
 }

@@ -12,7 +12,7 @@ func subEventsFromZMQ() {
 	var msgConfig1 = types.MessageBusConfig{
 		SubscribeHost: types.HostInfo{
 			Host:     "localhost",
-			Port:     5571,
+			Port:     5563,
 			Protocol: "tcp",
 		},
 		Type: messaging.ZeroMQ,
@@ -41,9 +41,9 @@ func subEventsFromZMQ() {
 					case env := <-messages:
 						count++
 						fmt.Printf("%s\n", env.Payload)
-						if count == 1 {
-							return
-						}
+						//if count == 1 {
+						//	return
+						//}
 					}
 				}
 			}

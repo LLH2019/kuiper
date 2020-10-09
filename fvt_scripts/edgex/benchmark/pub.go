@@ -12,16 +12,18 @@ import (
 	"github.com/edgexfoundry/go-mod-messaging/messaging"
 	"github.com/edgexfoundry/go-mod-messaging/pkg/types"
 	"log"
-	"os"
-	"strconv"
 	"sync"
 	"time"
+	"os"
+	"strconv"
 )
 
 var msgConfig1 = types.MessageBusConfig{
 	PublishHost: types.HostInfo{
-		Host:     "172.31.1.144",
+		//Host:     "172.31.1.144",
+		Host:		"127.0.0.1",
 		Port:     5563,
+		//Port: 1883,
 		Protocol: "tcp",
 	},
 	Type: messaging.ZeroMQ,
@@ -60,7 +62,7 @@ func pubEventClientZeroMq(count int, wg *sync.WaitGroup) {
 					index = 0
 				}
 
-				var testEvent = models.Event{Device: "demo"}
+				var testEvent = models.Event{Device: "demo1"}
 				var r1 = models.Reading{Device: "Temperature device", Name: "Temperature", Value: fmt.Sprintf("%d", mockup[index].temperature)}
 				var r2 = models.Reading{Device: "Humidity device", Name: "Humidity", Value: fmt.Sprintf("%d", mockup[index].humidity)}
 				index++

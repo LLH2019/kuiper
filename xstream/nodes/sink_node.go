@@ -9,6 +9,7 @@ import (
 	"github.com/emqx/kuiper/plugins"
 	"github.com/emqx/kuiper/xstream/api"
 	"github.com/emqx/kuiper/xstream/sinks"
+	"reflect"
 	"sync"
 	"text/template"
 	"time"
@@ -75,6 +76,7 @@ func (m *SinkNode) Open(ctx api.StreamContext, result chan<- error) {
 		m.tch = make(chan struct{})
 	}
 	go func() {
+		fmt.Println("Open sink node...")
 		if c, ok := m.options["concurrency"]; ok {
 			if t, err := common.ToInt(c); err != nil || t <= 0 {
 				logger.Warnf("invalid type for concurrency property, should be positive integer but found %t", c)
@@ -156,6 +158,7 @@ func (m *SinkNode) Open(ctx api.StreamContext, result chan<- error) {
 		logger.Infof("open sink node %d instances", m.concurrency)
 		for i := 0; i < m.concurrency; i++ { // workers
 			go func(instance int) {
+				fmt.Println("open sink concurrency...")
 				var sink api.Sink
 				var err error
 				if !m.isMock {
@@ -239,6 +242,7 @@ func doCollect(sink api.Sink, item *CacheTuple, stats StatManager, retryInterval
 	var outdatas [][]byte
 	switch val := item.data.(type) {
 	case []byte:
+		fmt.Println("777777777777777777")
 		if omitIfEmpty && string(val) == "[{}]" {
 			return
 		}
@@ -282,8 +286,13 @@ func doCollect(sink api.Sink, item *CacheTuple, stats StatManager, retryInterval
 		}
 
 	case error:
+		fmt.Println("8888888888")
 		outdatas = [][]byte{[]byte(fmt.Sprintf(`[{"error":"%s"}]`, val.Error()))}
+	case string:
+
+		outdatas = [][]byte{[]byte(val)}
 	default:
+		fmt.Println("000000000", reflect.TypeOf(val), val)
 		outdatas = [][]byte{[]byte(fmt.Sprintf(`[{"error":"result is not a string but found %#v"}]`, val))}
 	}
 
@@ -320,6 +329,7 @@ func doGetSink(name string, action map[string]interface{}) (api.Sink, error) {
 		s   api.Sink
 		err error
 	)
+	fmt.Println("doGetSink... %s", name)
 	switch name {
 	case "log":
 		s = sinks.NewLogSink()

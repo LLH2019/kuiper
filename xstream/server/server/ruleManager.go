@@ -49,6 +49,23 @@ func createRuleState(rule *api.Rule) (*RuleState, error) {
 		Name: rule.Id,
 	}
 	registry.Store(rule.Id, rs)
+
+	//tp, inputs,_ := ruleProcessor.HandleETLTopo()
+	//props1 := map[string]interface{}{"interval":5000, "path":"/home/llh/out/result.txt"}
+	//tp.AddSink(inputs, nodes.NewSinkNode(fmt.Sprintf("%s_%d", "file", 0), "file", props1))
+	//
+	//props2 := map[string]interface{}{
+	//	"protocolVersion": "3.1",
+	//	"retained": false,
+	//	"server": "tcp://127.0.0.1:1883",
+	//	"topic": "devices/demo_001/messages/events",
+	//	}
+	//tp.AddSink(inputs, nodes.NewSinkNode(fmt.Sprintf("%s_%d", "mqtt", 1), "mqtt", props2))
+	//
+	//
+	//rs.Topology = tp
+	//rs.Triggered = true
+	//return rs, nil
 	if tp, err := ruleProcessor.ExecInitRule(rule); err != nil {
 		return rs, err
 	} else {

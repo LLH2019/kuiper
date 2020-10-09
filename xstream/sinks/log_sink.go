@@ -28,10 +28,14 @@ var QR = &QueryResult{LastFetch: time.Now()}
 
 func NewLogSinkToMemory() *collectors.FuncCollector {
 	QR.Results = make([]string, 10)
+	fmt.Println("new log sink to memory", QR.Results)
 	return collectors.Func(func(ctx api.StreamContext, data interface{}) error {
+		fmt.Println("inner new log to sink memory " , QR.Results,"---", fmt.Sprintf("%s", data))
 		QR.Mux.Lock()
 		QR.Results = append(QR.Results, fmt.Sprintf("%s", data))
+		fmt.Println("inner new log to sink memory " , QR.Results, "---", fmt.Sprintf("%s", data))
 		QR.Mux.Unlock()
+		fmt.Println("inner new log to sink memory " , QR.Results, "---", fmt.Sprintf("%s", data))
 		return nil
 	})
 }

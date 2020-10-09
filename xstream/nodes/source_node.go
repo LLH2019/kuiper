@@ -179,6 +179,8 @@ func doGetSource(t string) (api.Source, error) {
 		s = &extensions.MQTTSource{}
 	case "httppull":
 		s = &extensions.HTTPPullSource{}
+	case "etlfile":
+		s = &extensions.FileSource{}
 	default:
 		s, err = plugins.GetSource(t)
 		if err != nil {

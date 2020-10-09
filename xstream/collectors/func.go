@@ -2,6 +2,7 @@ package collectors
 
 import (
 	"errors"
+	"fmt"
 	"github.com/emqx/kuiper/xstream/api"
 )
 
@@ -22,6 +23,7 @@ type FuncCollector struct {
 // will use the specified function parameter to
 // collect streaming data.
 func Func(f CollectorFunc) *FuncCollector {
+	fmt.Println("collector func...")
 	return &FuncCollector{f: f}
 }
 

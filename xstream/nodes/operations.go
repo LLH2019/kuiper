@@ -7,9 +7,23 @@ import (
 	"sync"
 )
 
+type OutputController struct {
+	Data chan interface{}
+}
+
+func (oc *OutputController)Input(i chan interface{})  {
+	oc.Data <- i
+}
+
+func (oc *OutputController)Output() chan interface{} {
+	return oc.Data
+}
+
 // UnOperation interface represents unary operations (i.e. Map, Filter, etc)
 type UnOperation interface {
-	Apply(ctx api.StreamContext, data interface{}, fv *xsql.FunctionValuer, afv *xsql.AggregateFunctionValuer) interface{}
+	Apply(ctx api.StreamContext, data interface{}, fv *xsql.FunctionValuer, afv *xsql.AggregateFunctionValuer, Oc *OutputController) interface{}
+	Prepare()
+	//Prepare()
 }
 
 // UnFunc implements UnOperation as type func (context.Context, interface{})
@@ -25,6 +39,7 @@ type UnaryOperator struct {
 	op        UnOperation
 	mutex     sync.RWMutex
 	cancelled bool
+	Oc *OutputController
 }
 
 // NewUnary creates *UnaryOperator value
@@ -38,6 +53,7 @@ func New(name string, bufferLength int) *UnaryOperator {
 				concurrency: 1,
 			},
 		},
+		Oc: &OutputController{Data: make(chan interface{},10240)},
 	}
 }
 
@@ -112,22 +128,53 @@ func (o *UnaryOperator) doOp(ctx api.StreamContext, errCh chan<- error) {
 			}
 			stats.IncTotalRecordsIn()
 			stats.ProcessTimeStart()
-			result := o.op.Apply(exeCtx, item, fv, afv)
+			o.op.Prepare()
+			o.op.Apply(exeCtx, item, fv, afv, o.Oc)
+			//result := o.Oc.Output()
 
-			switch val := result.(type) {
-			case nil:
-				continue
-			case error:
-				logger.Errorf("Operation %s error: %s", ctx.GetOpId(), val)
-				o.Broadcast(val)
-				stats.IncTotalExceptions()
-				continue
-			default:
-				stats.ProcessTimeEnd()
-				o.Broadcast(val)
-				stats.IncTotalRecordsOut()
-				stats.SetBufferLength(int64(len(o.input)))
-			}
+			go func() {
+				for result := range o.Oc.Data {
+					//fmt.Println("bbbbbbbbbbbbbbbbb", result, len(o.Oc.Data))
+
+					switch val := result.(type) {
+					case nil:
+						//continue
+					case error:
+						logger.Errorf("Operation %s error: %s", ctx.GetOpId(), val)
+						o.Broadcast(val)
+						stats.IncTotalExceptions()
+						//continue
+					case []*api.DefaultSourceTuple:
+						for i := 0; i < len(val); i++ {
+							fmt.Println("i am No ", i, val[i])
+							logger.Errorf("Operation %s error: %s", ctx.GetOpId(), val[i])
+							o.Broadcast(val[i])
+							stats.IncTotalExceptions()
+						}
+						//continue
+					case []*xsql.Tuple:
+						for i := 0; i < len(val); i++ {
+							fmt.Println("i am No ", i, val[i])
+							logger.Errorf("Operation %s error: %s", ctx.GetOpId(), val[i])
+							o.Broadcast(val[i])
+							stats.IncTotalExceptions()
+						}
+						//continue
+					case *xsql.Tuple:
+						fmt.Println("i am No ", val)
+						logger.Errorf("Operation %s error: %s", ctx.GetOpId(), val)
+						o.Broadcast(val)
+						stats.IncTotalExceptions()
+						//continue
+					default:
+						stats.ProcessTimeEnd()
+						o.Broadcast(val)
+						stats.IncTotalRecordsOut()
+						stats.SetBufferLength(int64(len(o.input)))
+					}
+				}
+			}()
+
 		// is cancelling
 		case <-ctx.Done():
 			logger.Infof("unary operator %s instance %d cancelling....", o.name, ctx.GetInstanceId())

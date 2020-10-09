@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/emqx/kuiper/xsql"
 	"github.com/emqx/kuiper/xstream/api"
+	"github.com/emqx/kuiper/xstream/nodes"
 )
 
 type FilterPlan struct {
@@ -14,9 +15,10 @@ type FilterPlan struct {
  *  input: *xsql.Tuple from preprocessor | xsql.WindowTuplesSet from windowOp | xsql.JoinTupleSets from joinOp
  *  output: *xsql.Tuple | xsql.WindowTuplesSet | xsql.JoinTupleSets
  */
-func (p *FilterPlan) Apply(ctx api.StreamContext, data interface{}, fv *xsql.FunctionValuer, afv *xsql.AggregateFunctionValuer) interface{} {
+func (p *FilterPlan) Apply(ctx api.StreamContext, data interface{}, fv *xsql.FunctionValuer, afv *xsql.AggregateFunctionValuer, Oc *nodes.OutputController) interface{} {
 	log := ctx.GetLogger()
 	log.Debugf("filter plan receive %s", data)
+	fmt.Println("filter apply pre data is :", data)
 	switch input := data.(type) {
 	case error:
 		return input
@@ -81,4 +83,12 @@ func (p *FilterPlan) Apply(ctx api.StreamContext, data interface{}, fv *xsql.Fun
 		return fmt.Errorf("run Where error: invalid input %[1]T(%[1]v)", input)
 	}
 	return nil
+}
+
+func (p *FilterPlan)Emit(i interface{}) interface{} {
+	return p.Emit(i)
+}
+
+func (p *FilterPlan) Prepare(){
+
 }

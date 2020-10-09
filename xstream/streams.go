@@ -2,6 +2,7 @@ package xstream
 
 import (
 	"context"
+	"fmt"
 	"github.com/emqx/kuiper/common"
 	"github.com/emqx/kuiper/xstream/api"
 	"github.com/emqx/kuiper/xstream/checkpoints"
@@ -107,17 +108,21 @@ func (s *TopologyNew) Open() <-chan error {
 	// open stream
 	go func() {
 		// open stream sink, after log sink is ready.
+		fmt.Println("snk open stream...")
 		for _, snk := range s.sinks {
+			fmt.Println("open stream1111")
 			snk.Open(s.ctx.WithMeta(s.name, snk.GetName(), s.store), s.drain)
 		}
 
 		//apply operators, if err bail
 		for _, op := range s.ops {
+			fmt.Println("open stream2222")
 			op.Exec(s.ctx.WithMeta(s.name, op.GetName(), s.store), s.drain)
 		}
 
 		// open source, if err bail
 		for _, node := range s.sources {
+			fmt.Println("open stream3333")
 			node.Open(s.ctx.WithMeta(s.name, node.GetName(), s.store), s.drain)
 		}
 
