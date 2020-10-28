@@ -132,6 +132,7 @@ func (c *Cache) timebasedRun(ctx api.StreamContext, saveInterval int) {
 				go func() {
 					if err := c.saveCache(logger, clone); err != nil {
 						logger.Debugf("%v", err)
+						fmt.Println("i am fault..........................")
 						c.drainError(err)
 					}
 				}()
@@ -190,7 +191,8 @@ func (c *Cache) loadCache() error {
 
 func (c *Cache) saveCache(_ api.Logger, p *LinkedQueue) error {
 	err := c.store.Open()
-	if err != nil {
+	fmt.Println("save cache () == ", err)
+	if err != nil && err != io.EOF {
 		return err
 	}
 	defer c.store.Close()
@@ -198,6 +200,7 @@ func (c *Cache) saveCache(_ api.Logger, p *LinkedQueue) error {
 }
 
 func (c *Cache) drainError(err error) {
+	fmt.Println("cache error 000000000000")
 	c.errorCh <- err
 }
 

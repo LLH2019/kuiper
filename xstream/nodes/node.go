@@ -73,6 +73,8 @@ func (o *defaultNode) doBroadcast(val interface{}) error {
 	logger := o.ctx.GetLogger()
 	var wg sync.WaitGroup
 	wg.Add(len(o.outputs))
+	logger.Debugf("bdoBroadcast", val)
+	//fmt.Println("doBroadcast  ", val)
 	for n, out := range o.outputs {
 		go func(name string, output chan<- interface{}) {
 			output <- val

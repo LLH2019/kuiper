@@ -254,6 +254,26 @@ func main() {
 
 					},
 				},
+
+				{
+					Name:  "topo3",
+					Usage: "create topo3",
+					Flags: []cli.Flag{
+
+					},
+					Action: func(c *cli.Context) error {
+						var reply string
+						err = client.Call("Server.CreateEtl3", "", &reply)
+						if err != nil {
+							fmt.Println(err)
+						} else {
+							fmt.Println(reply)
+						}
+
+						return nil
+
+					},
+				},
 				{
 					Name:  "plugin",
 					Usage: "create plugin $plugin_type $plugin_name [$plugin_json | -f plugin_def_file]",

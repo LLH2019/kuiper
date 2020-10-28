@@ -1,8 +1,27 @@
-package xstream
+package main
 
-import "github.com/emqx/kuiper/xstream/server/server"
+import (
+	"fmt"
+)
 
 func main() {
-	server := new(server.Server)
-	server.CreateETLTopo()
+	//server := new(server.Server)
+	//server.CreateETLTopo()
+	ch := make(chan int)
+
+	//go func() {
+	//	for range time.Tick(2*time.Second){
+	//		ch <- 0
+	//	}
+	//}()
+
+	for {
+		select {
+		case <-ch:
+			fmt.Println("case1")
+			//default:
+			//	fmt.Println("default")
+		}
+	}
+
 }

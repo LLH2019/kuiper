@@ -1,7 +1,6 @@
 package plans
 
 import (
-	"fmt"
 	"github.com/emqx/kuiper/xsql"
 	"github.com/emqx/kuiper/xstream/api"
 	"github.com/emqx/kuiper/xstream/nodes"
@@ -10,33 +9,36 @@ import (
 	"time"
 )
 
-type CsvToSenMLPlan struct {
+type CsvToSenMLWithoutPlan struct {
 	Fields      xsql.Fields
 	IsAggregate bool
 	SendMeta    bool
 	isTest      bool
 	MaxCountPossible int
 	MsgIdCountMap map[string]map[string]string
-	//annotationMap map[string]string
+	annotationMap map[string]string
 }
 
-//var AnnotationMap = make(map[string]string, 2048)
+
 
 /**
  *  input: *xsql.Tuple
  *  output: *xsql.Tuple
  */
-func (pp *CsvToSenMLPlan) Apply(ctx api.StreamContext, data interface{}, fv *xsql.FunctionValuer, afv *xsql.AggregateFunctionValuer, Oc *nodes.OutputController) interface{} {
-	log := ctx.GetLogger()
-	log.Debugf("project plan receive %s", data)
+func (pp *CsvToSenMLWithoutPlan) Apply(ctx api.StreamContext, data interface{}, fv *xsql.FunctionValuer, afv *xsql.AggregateFunctionValuer, Oc *nodes.OutputController) interface{} {
+
+	//preTime := time.Now().UnixNano()
+
+	//log := ctx.GetLogger()
+	//log.Debugf("project plan receive %s", data)
 	//fmt.Println("CsvToSenMLPlan apply pre data is ", data, reflect.TypeOf(data))
-	var results []map[string]interface{}
-	result := make(map[string]interface{})
-	switch input := data.(type) {
-	case error:
-		return input
-	case *xsql.Tuple:
-		message := input.Message
+	//var results []map[string]interface{}
+	//result := make(map[string]interface{})
+	//switch input := data.(type) {
+	//case error:
+	//	return input
+	//case *xsql.Tuple:
+		message := data.(*xsql.Tuple).Message
 
 		jsonStr := pp.convertToJson(message)
 		//source := strings.Split(message["obsVal"].(string), ",")[0]
@@ -47,16 +49,16 @@ func (pp *CsvToSenMLPlan) Apply(ctx api.StreamContext, data interface{}, fv *xsq
 		//tuple := new(xsql.Tuple)
 		//tuple.Message = message
 		//fmt.Println("CsvToSenML tuple data ", jsonStr)
-		result["demo"] = jsonStr
-		results = append(results, result)
+		//result["demo"] = jsonStr
+		//results = append(results, result)
 
 		//fmt.Println("CsvToSenML tuple data ", results)
 		Oc.Data <- jsonStr
 
 
-	default:
-		return fmt.Errorf("run Select error: invalid input %[1]T(%[1]v)", input)
-	}
+	//default:
+	//	return fmt.Errorf("run Select error: invalid input %[1]T(%[1]v)", input)
+	//}
 
 	//fmt.Println("2222222222222222222222222222222")
 	//fmt.Println("CsvToSenML apply post data is ", results)
@@ -66,10 +68,14 @@ func (pp *CsvToSenMLPlan) Apply(ctx api.StreamContext, data interface{}, fv *xsq
 	//} else {
 	//	return fmt.Errorf("run Select error: %v", err)
 	//}
-	return results
+	//return results
+
+	//postTime := time.Now().UnixNano()
+	//fmt.Println("CsvToSenMLWithoutPlan execute time " ,postTime-preTime)
+	return nil
 }
 
-func (pp *CsvToSenMLPlan)Prepare()  {
+func (pp *CsvToSenMLWithoutPlan)Prepare()  {
 	//inputFile,err := os.Open("/home/llh/code/new-kuiper/kuiper/data/city-metadata.txt")
 	//if err != nil {
 	//	fmt.Println("打开文件出错")
@@ -77,7 +83,7 @@ func (pp *CsvToSenMLPlan)Prepare()  {
 	//}
 	//defer inputFile.Close()
 	//inputReader := bufio.NewReader(inputFile)
-	////pp.annotationMap = make(map[string]string)
+	//pp.annotationMap = make(map[string]string)
 	//for  {
 	//	line,err := inputReader.ReadString('\n')
 	//	if err != nil {
@@ -85,15 +91,22 @@ func (pp *CsvToSenMLPlan)Prepare()  {
 	//		break
 	//	}
 	//	strs := strings.SplitN(line, ":", 2)
-	//	AnnotationMap[strs[0]] = strs[1]
+	//	pp.annotationMap[strs[0]] = strs[1]
 	//}
 
 }
 
-func (pp *CsvToSenMLPlan) convertToJson(message xsql.Message) interface{} {
+func (pp *CsvToSenMLWithoutPlan) convertToJson(message xsql.Message) interface{} {
+	//fmt.Println("csvTo message", message)
+	//obsType := message["obsType"].(string)
 	obsVal := message["obsVal"].(string)
+	//fmt.Println("----------", obsVal)
+	//meta := message["meta"].(string)
+	//msgId := message["msgId"].(string)
 	obsVal = strings.Replace(obsVal, "\n", "", -1)
 	strs := strings.Split(obsVal, ",")
+	//o1 := "{" + "\"sv\":\"" + obsType + "\","  +"\"u\":\"string\"," + "\"n\":\"type\""+ "}"
+	//o2 := "{" + "\"sv\":\"" + meta + "\","  +"\"u\":\"string\"," + "\"n\":\"val\""+ "}"
 
 	e1 := "{" + "\"sv\":\"" + strs[0] + "\","  +"\"u\":\"string\"," + "\"n\":\"source\""+ "}"
  	e2 := "{" + "\"v\":\"" + strs[2] + "\","  +"\"u\":\"lon\"," + "\"n\":\"longitude\""+ "}"
@@ -110,8 +123,10 @@ func (pp *CsvToSenMLPlan) convertToJson(message xsql.Message) interface{} {
 	e := "[" + e1 + "," + e2 + "," + e3 + "," + e4 + "," + e5 + "," + e6 + "," + e7 + "," + e8 +  "]"
 
 	//e := "[" + e1 + "," + e2 + "," + e3 + "," + e4 + "," + e5 + "," + e6 + "," + e7 + "," + e8 + "," + e9 + "," + e10 + "]"
+
+	//e := "[" +  o1 + "," + o2 +  "]"
 	t := strconv.FormatInt(time.Now().Unix(), 10)
-	//jsonStr := "[" +  "\"demo\":" + "{" + "\"bt\":\"" + strs[1] + "\"," + "\"e\":" + e + ",\"time\":" + t + "}" +"]"
-	jsonStr := "{" + "\"bt\":\"" + strs[1] + "\"," + "\"e\":" + e + ",\"time\":" + t + "}"
+	jsonStr := "[" +  "\"demo\":" + "{" + "\"bt\":\"" + strs[1] + "\"," + "\"e\":" + e + ",\"time\":" + t + "}" +"]"
+	//jsonStr := "{" + "\"msgid\":\"" + msgId + "\"," + "\"e\":" + e + ",\"time\":" + t + "}"
 	return jsonStr
 }

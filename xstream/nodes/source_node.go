@@ -1,6 +1,7 @@
 package nodes
 
 import (
+	"fmt"
 	"github.com/emqx/kuiper/common"
 	"github.com/emqx/kuiper/plugins"
 	"github.com/emqx/kuiper/xsql"
@@ -181,6 +182,8 @@ func doGetSource(t string) (api.Source, error) {
 		s = &extensions.HTTPPullSource{}
 	case "etlfile":
 		s = &extensions.FileSource{}
+	case "kuiperfile":
+		s = &extensions.KuiperFileSource{}
 	default:
 		s, err = plugins.GetSource(t)
 		if err != nil {
@@ -191,6 +194,7 @@ func doGetSource(t string) (api.Source, error) {
 }
 
 func (m *SourceNode) drainError(errCh chan<- error, err error, ctx api.StreamContext, logger api.Logger) {
+	fmt.Println("drainError", 222222)
 	select {
 	case errCh <- err:
 	case <-ctx.Done():

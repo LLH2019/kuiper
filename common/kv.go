@@ -124,6 +124,7 @@ func (m *SimpleKVStore) run() {
 
 func (m *SimpleKVStore) Open() error {
 	m.ctrlCh <- OPEN
+	fmt.Println("hahahha kvkvkv")
 	return <-m.errCh
 }
 

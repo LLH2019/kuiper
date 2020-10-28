@@ -82,6 +82,35 @@ func (t *Server) CreateEtl2(args string, reply *string)  error{
 	return nil
 }
 
+func (t *Server) CreateEtl3(args string, reply *string)  error{
+	fmt.Println("args:", args)
+	tp, inputs,_ := ruleProcessor.HandleETLTopo3()
+	//props1 := map[string]interface{}{"interval":5000, "path":"/home/llh/out/result.txt"}
+	//tp.AddSink(inputs, nodes.NewSinkNode(fmt.Sprintf("%s_%d", "file", 0), "file", props1))
+
+	props2 := map[string]interface{}{
+		"server": "tcp://127.0.0.1:1883",
+		"topic": "devices/demo_001/messages/events2",
+		"protocolVersion": "3.1",
+		"concurrency" :1,
+		"retained": false}
+	tp.AddSink(inputs, nodes.NewSinkNode(fmt.Sprintf("%s_%d", "mqtt", 1), "mqtt", props2))
+
+	rs := &RuleState{
+		Name: "etl2",
+	}
+	rs.Topology = tp
+	rs.Triggered = true
+	err := doStartRule(rs)
+	if err != nil {
+		return err
+	}
+	msg := fmt.Sprintf("CreateETLTopo was submit successfully.")
+	logger.Println(msg)
+	*reply = fmt.Sprintf(msg)
+	return nil
+}
+
 func (t *Server) WordCount(reply *string) error {
 	return nil
 }

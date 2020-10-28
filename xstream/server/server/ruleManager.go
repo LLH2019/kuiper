@@ -84,6 +84,7 @@ func doStartRule(rs *RuleState) error {
 		case err := <-tp.Open():
 			tp.GetContext().SetError(err)
 			logger.Printf("closing rule %s for error: %v", rs.Name, err)
+			fmt.Println("closing rule %s for error: ", rs.Name, err)
 			tp.Cancel()
 		}
 	}()

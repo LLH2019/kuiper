@@ -5,9 +5,11 @@ import (
 	"github.com/emqx/kuiper/plugins"
 	"github.com/emqx/kuiper/xsql/processors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"net/http/pprof"
 
 	"context"
 	"fmt"
+	_ "github.com/mkevac/debugcharts"
 	"net/http"
 	"net/rpc"
 	"os"
@@ -15,7 +17,7 @@ import (
 	"path"
 	"syscall"
 	"time"
-)
+	)
 
 var (
 	dataDir         string
@@ -28,6 +30,23 @@ var (
 )
 
 func StartUp(Version, LoadFileType string) {
+go func() {
+	fmt.Println("http listening .........")
+	//提供给负载均衡探活
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("ok"))
+
+	})
+
+	//prometheus
+	http.Handle("/metrics", promhttp.Handler())
+
+	//pprof, go tool pprof -http=:8081 http://$host:$port/debug/pprof/heap
+	http.ListenAndServe(":10108", nil)
+	http.HandleFunc("/debug/pprof/", http.HandlerFunc(pprof.Index))
+
+}()
+
 	version = Version
 	common.LoadFileType = LoadFileType
 	startTimeStamp = time.Now().Unix()

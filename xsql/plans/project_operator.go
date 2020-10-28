@@ -7,7 +7,6 @@ import (
 	"github.com/emqx/kuiper/xsql"
 	"github.com/emqx/kuiper/xstream/api"
 	"github.com/emqx/kuiper/xstream/nodes"
-	"reflect"
 	"strconv"
 	"strings"
 )
@@ -33,8 +32,8 @@ func (pp *ProjectPlan) Apply(ctx api.StreamContext, data interface{}, fv *xsql.F
 		return input
 	case *xsql.Tuple:
 		ve := pp.getVE(input, input, fv, afv)
-		fmt.Println("vvvvve ",ve, reflect.TypeOf(ve))
-		fmt.Println("input ", input)
+		//fmt.Println("vvvvve ",ve, reflect.TypeOf(ve))
+		//fmt.Println("input ", input)
 		if r, err := project(pp.Fields, ve, pp.isTest); err != nil {
 			return fmt.Errorf("run Select error: %s", err)
 		} else {

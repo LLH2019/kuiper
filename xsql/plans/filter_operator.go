@@ -18,7 +18,7 @@ type FilterPlan struct {
 func (p *FilterPlan) Apply(ctx api.StreamContext, data interface{}, fv *xsql.FunctionValuer, afv *xsql.AggregateFunctionValuer, Oc *nodes.OutputController) interface{} {
 	log := ctx.GetLogger()
 	log.Debugf("filter plan receive %s", data)
-	fmt.Println("filter apply pre data is :", data)
+	//fmt.Println("filter apply pre data is :", data)
 	switch input := data.(type) {
 	case error:
 		return input

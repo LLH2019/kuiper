@@ -21,10 +21,10 @@ type RangeFilterPlan struct {
 func (p *RangeFilterPlan) Apply(ctx api.StreamContext, data interface{}, fv *xsql.FunctionValuer, afv *xsql.AggregateFunctionValuer, Oc *nodes.OutputController) interface{} {
 	log := ctx.GetLogger()
 	log.Debugf("filter plan receive %s", data)
-	fmt.Println("range filter pre data is : ", data , "type is:", reflect.TypeOf(data))
+	//fmt.Println("range filter pre data is : ", data , "type is:", reflect.TypeOf(data))
 	tuple := data.(*xsql.Tuple)
 	msg := tuple.Message
-	fmt.Println("msg data is : ", msg, "type is ", reflect.TypeOf(msg))
+	//fmt.Println("msg data is : ", msg, "type is ", reflect.TypeOf(msg))
 	value := msg[p.Key]
 	//fmt.Println("value is: ", value, "error is", err)
 	//if err {
@@ -38,7 +38,7 @@ func (p *RangeFilterPlan) Apply(ctx api.StreamContext, data interface{}, fv *xsq
 		return tuple
 	}
 
-	fmt.Println("range filter result nil data is : ", data , "type is:", reflect.TypeOf(data))
+	//fmt.Println("range filter result nil data is : ", data , "type is:", reflect.TypeOf(data))
 	return nil
 }
 

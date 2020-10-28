@@ -188,8 +188,10 @@ func (m *SinkNode) Open(ctx api.StreamContext, result chan<- error) {
 				m.mutex.Unlock()
 				var cache *Cache
 				if m.qos >= api.AtLeastOnce {
+					fmt.Println("api.AtLeastOnce >>>>>>>>>>>")
 					cache = NewCheckpointbasedCache(m.input, cacheLength, m.tch, result, ctx)
 				} else {
+					fmt.Println("api.AtLeastOnce <<<<<<<<<<<")
 					cache = NewTimebasedCache(m.input, cacheLength, cacheSaveInterval, result, ctx)
 				}
 				for {

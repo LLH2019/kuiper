@@ -99,6 +99,7 @@ func (s *TopologyNew) Open() <-chan error {
 	s.prepareContext() // ensure context is set
 	var err error
 	if s.store, err = states.CreateStore(s.name, s.qos); err != nil {
+		//fmt.Println("CreateStore1111111111111111111", err)
 		s.drainErr(err)
 		return s.drain
 	}
@@ -106,24 +107,28 @@ func (s *TopologyNew) Open() <-chan error {
 	log := s.ctx.GetLogger()
 	log.Infoln("Opening stream")
 	// open stream
+
 	go func() {
 		// open stream sink, after log sink is ready.
 		fmt.Println("snk open stream...")
 		for _, snk := range s.sinks {
 			fmt.Println("open stream1111")
 			snk.Open(s.ctx.WithMeta(s.name, snk.GetName(), s.store), s.drain)
+			fmt.Println("open stream1111 error", s.drain)
 		}
 
 		//apply operators, if err bail
 		for _, op := range s.ops {
 			fmt.Println("open stream2222")
 			op.Exec(s.ctx.WithMeta(s.name, op.GetName(), s.store), s.drain)
+			fmt.Println("open stream2222 error", s.drain)
 		}
 
 		// open source, if err bail
 		for _, node := range s.sources {
 			fmt.Println("open stream3333")
 			node.Open(s.ctx.WithMeta(s.name, node.GetName(), s.store), s.drain)
+			fmt.Println("open stream3333 eerror ", s.drain)
 		}
 
 		// activate checkpoint
@@ -131,7 +136,7 @@ func (s *TopologyNew) Open() <-chan error {
 			s.coordinator.Activate()
 		}
 	}()
-
+	fmt.Println("drain 222222222222222222222222", s.drain)
 	return s.drain
 }
 

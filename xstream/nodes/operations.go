@@ -53,13 +53,18 @@ func New(name string, bufferLength int) *UnaryOperator {
 				concurrency: 1,
 			},
 		},
-		Oc: &OutputController{Data: make(chan interface{},10240)},
+		Oc: &OutputController{Data: make(chan interface{}, bufferLength)},
 	}
 }
 
 // SetOperation sets the executor operation
 func (o *UnaryOperator) SetOperation(op UnOperation) {
 	o.op = op
+}
+
+// SetOperation sets the executor operation
+func (o *UnaryOperator) GetOperation() UnOperation {
+	return o.op
 }
 
 // Exec is the entry point for the executor
@@ -69,6 +74,7 @@ func (o *UnaryOperator) Exec(ctx api.StreamContext, errCh chan<- error) {
 	log.Debugf("Unary operator %s is started", o.name)
 
 	if len(o.outputs) <= 0 {
+		fmt.Println("errCh exec 555555555555")
 		go func() { errCh <- fmt.Errorf("no output channel found") }()
 		return
 	}
@@ -81,6 +87,7 @@ func (o *UnaryOperator) Exec(ctx api.StreamContext, errCh chan<- error) {
 	o.statManagers = nil
 
 	for i := 0; i < o.concurrency; i++ { // workers
+		o.op.Prepare()
 		instance := i
 		go o.doOp(ctx.WithInstance(instance), errCh)
 	}
@@ -103,6 +110,7 @@ func (o *UnaryOperator) doOp(ctx api.StreamContext, errCh chan<- error) {
 	if err != nil {
 		select {
 		case errCh <- err:
+			fmt.Println("doOp error77777777777777777")
 			logger.Errorf("unary operator %s error %s", o.name, err)
 		case <-ctx.Done():
 			logger.Infof("unary operator %s cancelling....", o.name)
@@ -117,72 +125,83 @@ func (o *UnaryOperator) doOp(ctx api.StreamContext, errCh chan<- error) {
 	o.statManagers = append(o.statManagers, stats)
 	o.mutex.Unlock()
 	fv, afv := xsql.NewFunctionValuersForOp(exeCtx)
-
-	for {
-		select {
-		// process incoming item
-		case item := <-o.input:
-			processed := false
-			if item, processed = o.preprocess(item); processed {
-				break
-			}
-			stats.IncTotalRecordsIn()
-			stats.ProcessTimeStart()
-			o.op.Prepare()
-			o.op.Apply(exeCtx, item, fv, afv, o.Oc)
-			//result := o.Oc.Output()
-
-			go func() {
-				for result := range o.Oc.Data {
-					//fmt.Println("bbbbbbbbbbbbbbbbb", result, len(o.Oc.Data))
-
-					switch val := result.(type) {
-					case nil:
-						//continue
-					case error:
-						logger.Errorf("Operation %s error: %s", ctx.GetOpId(), val)
-						o.Broadcast(val)
-						stats.IncTotalExceptions()
-						//continue
-					case []*api.DefaultSourceTuple:
-						for i := 0; i < len(val); i++ {
-							fmt.Println("i am No ", i, val[i])
-							logger.Errorf("Operation %s error: %s", ctx.GetOpId(), val[i])
-							o.Broadcast(val[i])
-							stats.IncTotalExceptions()
-						}
-						//continue
-					case []*xsql.Tuple:
-						for i := 0; i < len(val); i++ {
-							fmt.Println("i am No ", i, val[i])
-							logger.Errorf("Operation %s error: %s", ctx.GetOpId(), val[i])
-							o.Broadcast(val[i])
-							stats.IncTotalExceptions()
-						}
-						//continue
-					case *xsql.Tuple:
-						fmt.Println("i am No ", val)
-						logger.Errorf("Operation %s error: %s", ctx.GetOpId(), val)
-						o.Broadcast(val)
-						stats.IncTotalExceptions()
-						//continue
-					default:
-						stats.ProcessTimeEnd()
-						o.Broadcast(val)
-						stats.IncTotalRecordsOut()
-						stats.SetBufferLength(int64(len(o.input)))
+	//for i:=0; i<1; i++ {
+	//	go func() {
+			for {
+				select {
+				// process incoming item
+				case item := <-o.input:
+					//fmt.Println("666666666666--item", item)
+					processed := false
+					if item, processed = o.preprocess(item); processed {
+						break
 					}
-				}
-			}()
+					stats.IncTotalRecordsIn()
+					stats.ProcessTimeStart()
 
-		// is cancelling
-		case <-ctx.Done():
-			logger.Infof("unary operator %s instance %d cancelling....", o.name, ctx.GetInstanceId())
-			o.mutex.Lock()
-			cancel()
-			o.cancelled = true
-			o.mutex.Unlock()
-			return
-		}
+					//fmt.Println("666666666666--item", item)
+
+					o.op.Apply(exeCtx, item, fv, afv, o.Oc)
+					//result := o.Oc.Output()
+
+					//go func() {
+					for i := 0; i < len(o.Oc.Data); i++ {
+						//fmt.Println("bbbbbbbbbbbbbbbbb", result, len(o.Oc.Data))
+						//for  {
+						select {
+						case result := <-o.Oc.Data:
+
+							//fmt.Println("77777777777--result", result, reflect.TypeOf(result))
+							switch val := result.(type) {
+							case nil:
+								//continue
+							case error:
+								logger.Errorf("Operation %s error: %s", ctx.GetOpId(), val)
+								o.Broadcast(val)
+								stats.IncTotalExceptions()
+								//continue
+							case []*api.DefaultSourceTuple:
+								for i := 0; i < len(val); i++ {
+									fmt.Println("i am No ", i, val[i])
+									logger.Errorf("Operation %s error: %s", ctx.GetOpId(), val[i])
+									o.Broadcast(val[i])
+									stats.IncTotalExceptions()
+								}
+								//continue
+							case []*xsql.Tuple:
+								for i := 0; i < len(val); i++ {
+									fmt.Println("i am No ", i, val[i])
+									logger.Errorf("Operation %s error: %s", ctx.GetOpId(), val[i])
+									o.Broadcast(val[i])
+									stats.IncTotalExceptions()
+								}
+								//continue
+							case *xsql.Tuple:
+								//fmt.Println("i am No ", val)
+								//logger.Errorf("Operation %s error: %s", ctx.GetOpId(), val)
+								o.Broadcast(val)
+								stats.IncTotalExceptions()
+								//continue
+							default:
+								stats.ProcessTimeEnd()
+								o.Broadcast(val)
+								stats.IncTotalRecordsOut()
+								stats.SetBufferLength(int64(len(o.input)))
+							}
+						}
+					}
+					//}()
+
+				// is cancelling
+				case <-ctx.Done():
+					logger.Infof("unary operator %s instance %d cancelling....", o.name, ctx.GetInstanceId())
+					o.mutex.Lock()
+					cancel()
+					o.cancelled = true
+					o.mutex.Unlock()
+					return
+				}
+		//	}
+		//}()
 	}
 }
