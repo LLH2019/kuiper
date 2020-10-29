@@ -70,7 +70,7 @@ func (pp *SenMLParsePlan) Apply(ctx api.StreamContext, data interface{}, fv *xsq
 
 	//handler(pp, input.Message["payload"])
 	etl := extensions.Etl{}
-	err := json.Unmarshal([]byte(input.Message["payload"].(string)), &etl)
+	err := json.Unmarshal([]byte(input.Message["PAYLOAD"].(string)), &etl)
 	if err != nil {
 		fmt.Println("解析错误！！！")
 	}
@@ -89,18 +89,24 @@ func (pp *SenMLParsePlan) Apply(ctx api.StreamContext, data interface{}, fv *xsq
 		preMap[etl.Parameters[i].Name] = etl.Parameters[i].Value
 	}
 
-	meta := strconv.FormatFloat(etl.Bt.(float64), 'E', -1,64 )+ "," + preMap["longitude"].(string) + "," + preMap["latitude"].(string)
+	meta := strconv.FormatFloat(etl.Bt.(float64), 'f', -1,64 )+ "," + preMap["longitude"].(string) + "," + preMap["latitude"].(string)
+	//meta :=  etl.Bt.(string) + "," + preMap["longitude"].(string) + "," + preMap["latitude"].(string)
+	//fmt.Println("senml------------", meta)
 	sensorId := preMap["source"]
 
 	//t5 = time.Now().UnixNano()
 	for k,v := range(preMap) {
 		if k != "longitude" && k != "latitude" {
 			m := make(map[string]interface{})
-			m["msgId"] = input.Message["msgId"]
-			m["sensorId"] = sensorId
-			m["meta"] = meta
-			m["obsVal"] = v
-			m["obsType"] = k
+			m["MSGID"] = input.Message["MSGID"]
+			m["SENSORID"] = sensorId
+			m["META"] = meta
+			m["OBSTYPE"] = k
+			m["OBSVAL"] = v
+			m["op"] = "SENML"
+			m["TIMESTAMP"] = input.Message["TIMESTAMP"]
+			m["SPOUTTIMESTAMP"] = input.Message["SPOUTTIMESTAMP"]
+			m["CHAINSTAMP"] = input.Message["CHAINSTAMP"]
 			//metar := make(map[string]interface{})
 			tuple := new(xsql.Tuple)
 			tuple.Message = m

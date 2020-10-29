@@ -38,13 +38,23 @@ func (pp *AnnotationPlan) Apply(ctx api.StreamContext, data interface{}, fv *xsq
 	//	return input
 	//case *xsql.Tuple:
 		message := data.(*xsql.Tuple).Message
-		source := strings.Split(message["obsVal"].(string), ",")[0]
-
+		source := strings.Split(message["OBSVAL"].(string), ",")[1]
 
 
 		line := pp.AnnotationMap[source]
 		//fmt.Println("-----------", source, line)
-		message["obsVal"] = message["obsVal"].(string) + "," + line
+		message["OBSVAL"] = message["OBSVAL"].(string) + "," + line
+		message["op"] = message["op"].(string) + "-ANNO"
+
+		//message["MSGID"] = message["MSGID"]
+		//message["META"] = message["META"]
+		//message["TIMESTAMP"] = message["TIMESTAMP"]
+		//message["SPOUTTIMESTAMP"] = message["SPOUTTIMESTAMP"]
+		//message["CHAINSTAMP"] = message["CHAINSTAMP"]
+
+
+	//fmt.Println("line --- ", line, message["OBSVAL"])
+
 		//message["obsVal"] = message["obsVal"].(string)
 		//tuple := new(xsql.Tuple)
 		tuple.Message = message
@@ -54,8 +64,9 @@ func (pp *AnnotationPlan) Apply(ctx api.StreamContext, data interface{}, fv *xsq
 		//result := make(map[string]interface{})
 		//result["demo"] = tuple
 		//results = append(results, result)
-		Oc.Data <- tuple
-
+		if line != "" {
+			Oc.Data <- tuple
+		}
 		//msg,ok := pp.MsgIdCountMap[message["msgId"].(string)]
 		//fmt.Println("etl join msg map out ", msg, " message ", message, "ok ", ok)
 		//if ok {

@@ -4,9 +4,7 @@ import (
 	"github.com/emqx/kuiper/xsql"
 	"github.com/emqx/kuiper/xstream/api"
 	"github.com/emqx/kuiper/xstream/nodes"
-	"strconv"
 	"strings"
-	"time"
 )
 
 type CsvToSenMLWithoutPlan struct {
@@ -99,34 +97,39 @@ func (pp *CsvToSenMLWithoutPlan)Prepare()  {
 func (pp *CsvToSenMLWithoutPlan) convertToJson(message xsql.Message) interface{} {
 	//fmt.Println("csvTo message", message)
 	//obsType := message["obsType"].(string)
-	obsVal := message["obsVal"].(string)
+	obsVal := message["OBSVAL"].(string)
+	//op := message["op"].(string) + "-CSV"
 	//fmt.Println("----------", obsVal)
 	//meta := message["meta"].(string)
 	//msgId := message["msgId"].(string)
 	obsVal = strings.Replace(obsVal, "\n", "", -1)
+	//fmt.Println("+++++++ ", obsVal)
 	strs := strings.Split(obsVal, ",")
 	//o1 := "{" + "\"sv\":\"" + obsType + "\","  +"\"u\":\"string\"," + "\"n\":\"type\""+ "}"
 	//o2 := "{" + "\"sv\":\"" + meta + "\","  +"\"u\":\"string\"," + "\"n\":\"val\""+ "}"
 
-	e1 := "{" + "\"sv\":\"" + strs[0] + "\","  +"\"u\":\"string\"," + "\"n\":\"source\""+ "}"
- 	e2 := "{" + "\"v\":\"" + strs[2] + "\","  +"\"u\":\"lon\"," + "\"n\":\"longitude\""+ "}"
-	e3 := "{" + "\"v\":\"" + strs[3] + "\","  +"\"u\":\"lat\"," + "\"n\":\"latitude\""+ "}"
-	e4 := "{" + "\"v\":\"" + strs[4] + "\","  +"\"u\":\"far\"," + "\"n\":\"temperature\""+ "}"
-	e5 := "{" + "\"v\":\"" + strs[5] + "\","  +"\"u\":\"per\"," + "\"n\":\"humidity\""+ "}"
-	e6 := "{" + "\"v\":\"" + strs[6] + "\","  +"\"u\":\"per\"," + "\"n\":\"light\""+ "}"
-	e7 := "{" + "\"v\":\"" + strs[7] + "\","  +"\"u\":\"per\"," + "\"n\":\"dust\""+ "}"
-	e8 := "{" + "\"v\":\"" + strs[8] + "\","  +"\"u\":\"per\"," + "\"n\":\"airquality_raw\""+ "}"
-	//e9 := "{" + "\"sv\":\"" + strs[9] + "\","  +"\"u\":\"string\"," + "\"n\":\"location\""+ "}"
-	//e10 := "{" + "\"sv\":\"" + strs[10] + "\","  +"\"u\":\"string\"," + "\"n\":\"type\""+ "}"
+	e1 := "{" + "\"sv\":\"" + strs[1] + "\","  +"\"u\":\"string\"," + "\"n\":\"source\""+ "}"
+ 	e2 := "{" + "\"u\":\"lon\"," + "\"v\":\"" + strs[2] + "\","  + "\"n\":\"longitude\""+ "}"
+	e3 := "{" + "\"u\":\"lat\"," + "\"v\":\"" + strs[3] + "\","  + "\"n\":\"latitude\""+ "}"
+	e4 := "{" + "\"u\":\"far\"," + "\"v\":\"" + strs[4] + "\","  + "\"n\":\"temperature\""+ "}"
+	e5 := "{" + "\"u\":\"per\"," + "\"v\":\"" + strs[5] + "\","  + "\"n\":\"humidity\""+ "}"
+	e6 := "{" + "\"u\":\"per\"," + "\"v\":\"" + strs[6] + "\","  + "\"n\":\"light\""+ "}"
+	e7 := "{" + "\"u\":\"per\"," + "\"v\":\"" + strs[7] + "\","  + "\"n\":\"dust\""+ "}"
+	e8 := "{" + "\"u\":\"per\"," + "\"v\":\"" + strs[8] + "\","  + "\"n\":\"airquality_raw\""+ "}"
+	e9 := "{" + "\"sv\":\"" + strs[9] + "\","  +"\"u\":\"string\"," + "\"n\":\"location\""+ "}"
+	e10 := "{" + "\"sv\":\"" + strs[10] + "\","  +"\"u\":\"string\"," + "\"n\":\"type\""+ "}"
+	//e11 := "{" + "\"v\":\"" + op + "\","  + "\"n\":\"myop\""+ "}"
 
+	//e := "[" + e1 + "," + e2 + "," + e3 + "," + e4 + "," + e5 + "," + e6 + "," + e7 + "," + e8 +  "," + e9 + "]"
 
-	e := "[" + e1 + "," + e2 + "," + e3 + "," + e4 + "," + e5 + "," + e6 + "," + e7 + "," + e8 +  "]"
-
-	//e := "[" + e1 + "," + e2 + "," + e3 + "," + e4 + "," + e5 + "," + e6 + "," + e7 + "," + e8 + "," + e9 + "," + e10 + "]"
+	e := "[" + e1 + "," + e2 + "," + e3 + "," + e4 + "," + e5 + "," + e6 + "," + e7 + "," + e8 + "," + e9 + "," + e10  + "]"
 
 	//e := "[" +  o1 + "," + o2 +  "]"
-	t := strconv.FormatInt(time.Now().Unix(), 10)
-	jsonStr := "[" +  "\"demo\":" + "{" + "\"bt\":\"" + strs[1] + "\"," + "\"e\":" + e + ",\"time\":" + t + "}" +"]"
+	//t := strconv.FormatInt(time.Now().Unix(), 10)
+	//jsonStr := "[" +  "\"demo\":" + "{" + "\"bt\":\"" + strs[0] + "\"," + "\"e\":" + e + ",\"time\":" + t + "}" +"]"
+	//jsonStr := "{" + "\"bt\":\"" + strs[0] + "\"," + "\"e\":" + e + ",\"time\":" + t + "}"
+	jsonStr := "{" + "\"bt\":\"" + strs[0] + "\"," + "\"e\":" + e + "}"
+	//fmt.Println("---", jsonStr)
 	//jsonStr := "{" + "\"msgid\":\"" + msgId + "\"," + "\"e\":" + e + ",\"time\":" + t + "}"
 	return jsonStr
 }

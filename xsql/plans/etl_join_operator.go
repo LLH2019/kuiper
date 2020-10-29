@@ -16,7 +16,7 @@ type EtlJoinPlan struct {
 	MaxCountPossible int
 	MsgIdCountMap map[interface{}]map[interface{}]interface{}
 	mutex sync.RWMutex
-	metaArray [6]string
+	metaArray [9]string
 }
 
 
@@ -49,31 +49,42 @@ func (pp *EtlJoinPlan) Apply(ctx api.StreamContext, data interface{}, fv *xsql.F
 		//t2 = time.Now().UnixNano()
 		//pp.mutex.RLock()
 		//defer pp.mutex.RUnlock()
-		msg,ok := pp.MsgIdCountMap[message["msgId"]]
+		msg,ok := pp.MsgIdCountMap[message["MSGID"]]
 		//t9 = time.Now().UnixNano()
 		//fmt.Println("etl join msg map out ", msg, " message ", message, "ok ", ok)
 		if ok {
-			msg[message["obsType"]] = message["obsVal"]
+			msg[message["OBSTYPE"]] = message["OBSVAL"]
 
 			//fmt.Println("etl Join msg map ", msg)
 			if len(msg) == pp.MaxCountPossible {
 				//t3 = time.Now().UnixNano()
 				tuple := new(xsql.Tuple)
 				m := make(map[string]interface{})
-				m["msgId"] = message["msgId"]
-				m["meta"] = message["meta"]
-				m["obsType"] = "JoinedValue"
+				m["MSGID"] = message["MSGID"]
+				m["META"] = message["META"]
+				m["OBSTYPE"] = "JoinedValue"
 
 				//preListTime = time.Now().UnixNano()
+
+				strs := strings.Split(message["META"].(string), ",")
+				msg["timestamp"] = strs[0]
+				msg["longitude"] = strs[1]
+				msg["latitude"] = strs[2]
 
 				var builer strings.Builder
 				for _,str := range pp.metaArray{
 					//fmt.Println("------------", str, msg[str])
 					builer.WriteString(msg[str].(string) + ",")
 				}
-				//buffer.
 
-				m["obsVal"] = builer.String()
+				//builer.Cap()
+
+				str := builer.String()
+				m["OBSVAL"] = str[0 : len(str)-1]
+				m["op"] = message["op"].(string) + "-JOIN"
+				m["TIMESTAMP"] = message["TIMESTAMP"]
+				m["SPOUTTIMESTAMP"] = message["SPOUTTIMESTAMP"]
+				m["CHAINSTAMP"] = message["CHAINSTAMP"]
 
 
 				//postListTime = time.Now().UnixNano()
@@ -90,18 +101,19 @@ func (pp *EtlJoinPlan) Apply(ctx api.StreamContext, data interface{}, fv *xsql.F
 				//results = append(results, result)
 				//fmt.Println("Etl Join OP OutputController ", tuple)
 				Oc.Data <- tuple
-				delete(pp.MsgIdCountMap, message["msgId"])
+				delete(pp.MsgIdCountMap, message["MSGID"])
 				//t4 = time.Now().UnixNano()
 			} else {
 				//t5 = time.Now().UnixNano()
-				pp.MsgIdCountMap[message["msgId"]] = msg
+				pp.MsgIdCountMap[message["MSGID"]] = msg
 				//t6 = time.Now().UnixNano()
 			}
 		} else {
 			//t7 = time.Now().UnixNano()
 			msgm := make(map[interface{}]interface{})
-			msgm[message["obsType"]] = message["obsVal"]
-			pp.MsgIdCountMap[message["msgId"]] = msgm
+			msgm[message["OBSTYPE"]] = message["OBSVAL"]
+			//msgm[message[""]]
+			pp.MsgIdCountMap[message["MSGID"]] = msgm
 			//t8 = time.Now().UnixNano()
 
 			//fmt.Println("etl join msgm ", msgm)
@@ -135,11 +147,14 @@ func (pp *EtlJoinPlan) Apply(ctx api.StreamContext, data interface{}, fv *xsql.F
 
 func (pp *EtlJoinPlan ) Prepare(){
 	//pp.metaArray = list.New()
-	pp.metaArray[0] = "source"
-	pp.metaArray[1] = "temperature"
-	pp.metaArray[2] = "humidity"
-	pp.metaArray[3] = "light"
-	pp.metaArray[4] = "dust"
-	pp.metaArray[5] = "airquality_raw"
+	pp.metaArray[0] = "timestamp"
+	pp.metaArray[1] = "source"
+	pp.metaArray[2] = "longitude"
+	pp.metaArray[3] = "latitude"
+	pp.metaArray[4] = "temperature"
+	pp.metaArray[5] = "humidity"
+	pp.metaArray[6] = "light"
+	pp.metaArray[7] = "dust"
+	pp.metaArray[8] = "airquality_raw"
 }
 
