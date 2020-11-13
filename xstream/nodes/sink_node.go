@@ -100,7 +100,7 @@ func (m *SinkNode) Open(ctx api.StreamContext, result chan<- error) {
 				retryInterval = t
 			}
 		}
-		cacheLength := 1024
+		cacheLength := 102400
 		if c, ok := m.options["cacheLength"]; ok {
 			if t, err := common.ToInt(c); err != nil || t < 0 {
 				logger.Warnf("invalid type for cacheLength property, should be positive integer but found %t", c)
@@ -197,6 +197,7 @@ func (m *SinkNode) Open(ctx api.StreamContext, result chan<- error) {
 				for {
 					select {
 					case data := <-cache.Out:
+						//fmt.Println("sink-node-5555")
 						if newdata, processed := m.preprocess(data.data); processed {
 							break
 						} else {
@@ -209,6 +210,7 @@ func (m *SinkNode) Open(ctx api.StreamContext, result chan<- error) {
 							doCollect(sink, data, stats, retryInterval, omitIfEmpty, sendSingle, tp, cache.Complete, ctx)
 						}
 					case <-ctx.Done():
+						fmt.Println("sink-node-6666")
 						logger.Infof("sink node %s instance %d done", m.name, instance)
 						if err := sink.Close(ctx); err != nil {
 							logger.Warnf("close sink node %s instance %d fails: %v", m.name, instance, err)
@@ -288,13 +290,13 @@ func doCollect(sink api.Sink, item *CacheTuple, stats StatManager, retryInterval
 		}
 
 	case error:
-		fmt.Println("8888888888")
+		fmt.Println("sink-node-8888888888")
 		outdatas = [][]byte{[]byte(fmt.Sprintf(`[{"error":"%s"}]`, val.Error()))}
 	case string:
-
+		//fmt.Println("sink-node-9999999999")
 		outdatas = [][]byte{[]byte(val)}
 	default:
-		fmt.Println("000000000", reflect.TypeOf(val), val)
+		fmt.Println("sink-node-000000000", reflect.TypeOf(val), val)
 		outdatas = [][]byte{[]byte(fmt.Sprintf(`[{"error":"result is not a string but found %#v"}]`, val))}
 	}
 
@@ -303,19 +305,23 @@ func doCollect(sink api.Sink, item *CacheTuple, stats StatManager, retryInterval
 		for {
 			select {
 			case <-ctx.Done():
+				fmt.Println("sink-node-4444")
 				logger.Infof("sink node %s instance %d stops data resending", ctx.GetOpId(), ctx.GetInstanceId())
 				return
 			default:
 				if err := sink.Collect(ctx, outdata); err != nil {
+					fmt.Println("sink-node-2222")
 					stats.IncTotalExceptions()
 					logger.Warnf("sink node %s instance %d publish %s error: %v", ctx.GetOpId(), ctx.GetInstanceId(), outdata, err)
 					if retryInterval > 0 {
+						fmt.Println("sink-node-1111")
 						time.Sleep(time.Duration(retryInterval) * time.Millisecond)
 						logger.Debugf("try again")
 					} else {
 						break outerloop
 					}
 				} else {
+					//fmt.Println("sink-node-3333")
 					logger.Debugf("success")
 					stats.IncTotalRecordsOut()
 					signalCh <- item.index

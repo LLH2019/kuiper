@@ -812,7 +812,7 @@ func (p *RuleProcessor) HandleETLTopo3()(*xstream.TopologyNew,[]api.Emitter, err
 		xsql.Dimensions{}, xsql.Expr(nil), xsql.SortFields(nil)}
 
 	// senMlParse 算子
-	senMlParseOp := xstream.Transform(&plans.SenMLParsePlan{Fields: selectStmt1.Fields, IsAggregate: xsql.IsAggStatement(selectStmt1), SendMeta: false}, "senml", 1024)
+	senMlParseOp := xstream.Transform(&plans.SenMLParsePlan{Fields: selectStmt1.Fields, IsAggregate: xsql.IsAggStatement(selectStmt1), SendMeta: false}, "senml", 10240)
 	senMlParseOp.SetConcurrency(1)
 	tp.AddOperator(inputs, senMlParseOp)
 	inputs = []api.Emitter{senMlParseOp}
@@ -820,19 +820,19 @@ func (p *RuleProcessor) HandleETLTopo3()(*xstream.TopologyNew,[]api.Emitter, err
 
 
 	//etlJoin 算子
-	etlJoinOp := xstream.Transform(&plans.EtlJoinPlan{Fields: selectStmt1.Fields, IsAggregate: xsql.IsAggStatement(selectStmt1), SendMeta: false, MaxCountPossible: 6, MsgIdCountMap: make(map[interface{}]map[interface{}]interface{})}, "eltjoin", 1024)
+	etlJoinOp := xstream.Transform(&plans.EtlJoinPlan{Fields: selectStmt1.Fields, IsAggregate: xsql.IsAggStatement(selectStmt1), SendMeta: false, MaxCountPossible: 6, MsgIdCountMap: make(map[interface{}]map[interface{}]interface{})}, "eltjoin", 10240)
 	etlJoinOp.SetConcurrency(1)
 	tp.AddOperator(inputs, etlJoinOp)
 	inputs = []api.Emitter{etlJoinOp}
 
 	// annotationOp 算子
-	annotationOp := xstream.Transform(&plans.AnnotationPlan{Fields: selectStmt1.Fields, IsAggregate: xsql.IsAggStatement(selectStmt1), SendMeta: false, MaxCountPossible: 6, MsgIdCountMap: make(map[string]map[string]string), AnnotationMap: make(map[string]string, 20480)}, "annotation", 1024)
+	annotationOp := xstream.Transform(&plans.AnnotationPlan{Fields: selectStmt1.Fields, IsAggregate: xsql.IsAggStatement(selectStmt1), SendMeta: false, MaxCountPossible: 6, MsgIdCountMap: make(map[string]map[string]string), AnnotationMap: make(map[string]string, 20480)}, "annotation", 10240)
 	annotationOp.SetConcurrency(1)
 	tp.AddOperator(inputs, annotationOp)
 	inputs = []api.Emitter{annotationOp}
 	inputs = []api.Emitter{annotationOp}
 
-	CsvToSenMLOP := xstream.Transform(&plans.CsvToSenMLWithoutPlan{Fields: selectStmt1.Fields, IsAggregate: xsql.IsAggStatement(selectStmt1), SendMeta: false, MaxCountPossible: 6, MsgIdCountMap: make(map[string]map[string]string)}, "csvtosen", 1024)
+	CsvToSenMLOP := xstream.Transform(&plans.CsvToSenMLWithoutPlan{Fields: selectStmt1.Fields, IsAggregate: xsql.IsAggStatement(selectStmt1), SendMeta: false, MaxCountPossible: 6, MsgIdCountMap: make(map[string]map[string]string)}, "csvtosen", 10240)
 	CsvToSenMLOP.SetConcurrency(1)
 	CsvToSenMLOP.GetOperation().Prepare()
 	tp.AddOperator(inputs, CsvToSenMLOP)

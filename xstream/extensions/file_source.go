@@ -80,7 +80,7 @@ func (fs *FileSource) Configure(device string, props map[string]interface{}) err
 	e := fs.list.Front()
 	gtimer.Add(interval, func() {
 		total := 0
-		for i := 0; i<1000; i++ {
+		for i := 0; i<16000; i++ {
 		//for i:=fs.list.Front(); i != nil; i=i.Next() {
 			//fs.poll <- str1
 			//fs.poll <- str2
@@ -125,6 +125,7 @@ func (fs *FileSource) Configure(device string, props map[string]interface{}) err
 
 func (fs *FileSource) Open(ctx api.StreamContext, consumer chan<- api.SourceTuple, errCh chan<- error) {
 
+	//preTime := time.Now().UnixNano()
 	//time.Sleep(10000)
 	//interval := 100*time.Millisecond
 	//fs.epollList = list.New()
@@ -140,6 +141,8 @@ func (fs *FileSource) Open(ctx api.StreamContext, consumer chan<- api.SourceTupl
 	//	//fmt.Println(time.Now(), time.Duration(time.Now().UnixNano() - now.UnixNano()))
 	//	//now = time.Now()
 	//})
+
+
 
 	startId := 1572000000008
 	//inputFile,err := os.Open(fs.filePath)
@@ -163,6 +166,7 @@ func (fs *FileSource) Open(ctx api.StreamContext, consumer chan<- api.SourceTupl
 	//for i:=0; i<1; i++ {
 	//	go func() {
 			for {
+				//preTime := time.Now().UnixNano()
 				//line,err := inputReader.ReadString('\n')
 
 				//fmt.Println("88888888888888", fs.epollList.Len())
@@ -198,11 +202,14 @@ func (fs *FileSource) Open(ctx api.StreamContext, consumer chan<- api.SourceTupl
 
 					consumer <- api.NewDefaultSourceTuple(result, meta)
 					runtime.Gosched()
+				//postTime := time.Now().UnixNano()
+				//fmt.Println("FileSourcePlan execute time " ,postTime-preTime)
 				//}
 
 		//	}
 		//}()
 	}
+
 	return
 
 }

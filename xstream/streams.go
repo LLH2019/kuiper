@@ -99,7 +99,7 @@ func (s *TopologyNew) Open() <-chan error {
 	s.prepareContext() // ensure context is set
 	var err error
 	if s.store, err = states.CreateStore(s.name, s.qos); err != nil {
-		//fmt.Println("CreateStore1111111111111111111", err)
+		fmt.Println("CreateStore1111111111111111111", err)
 		s.drainErr(err)
 		return s.drain
 	}

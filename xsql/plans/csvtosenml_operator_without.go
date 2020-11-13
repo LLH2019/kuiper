@@ -67,7 +67,11 @@ func (pp *CsvToSenMLWithoutPlan) Apply(ctx api.StreamContext, data interface{}, 
 	//	return fmt.Errorf("run Select error: %v", err)
 	//}
 	//return results
-
+	//time.Sleep(5000*time.Nanosecond)
+	a := 1
+	for i:=1; i<30000; i++ {
+		a++
+	}
 	//postTime := time.Now().UnixNano()
 	//fmt.Println("CsvToSenMLWithoutPlan execute time " ,postTime-preTime)
 	return nil

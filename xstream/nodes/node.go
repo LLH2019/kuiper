@@ -79,6 +79,7 @@ func (o *defaultNode) doBroadcast(val interface{}) error {
 		go func(name string, output chan<- interface{}) {
 			output <- val
 			wg.Done()
+			//fmt.Println("8888888888888888888888888888888888888888888")
 			logger.Debugf("broadcast from %s to %s done", o.ctx.GetOpId(), name)
 		}(n, out)
 	}

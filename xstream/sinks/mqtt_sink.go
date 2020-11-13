@@ -189,6 +189,12 @@ type Res struct {
 }
 
 func (ms *MQTTSink) Collect(ctx api.StreamContext, item interface{}) error {
+	//preTime := time.Now().UnixNano()
+	//a := 1
+	//for i:=1; i<200000; i++ {
+	//	a++
+	//}
+
 	//var results []map[string]interface{}
 	//json.Unmarshal(item.([]byte), strs)
 	//fmt.Println("mqtt...........", item, string(item.([]byte)[:]))
@@ -199,6 +205,8 @@ func (ms *MQTTSink) Collect(ctx api.StreamContext, item interface{}) error {
 	if token := c.Publish(ms.tpc, ms.qos, ms.retained, item); token.Wait() && token.Error() != nil {
 		return fmt.Errorf("publish error: %s", token.Error())
 	}
+	//postTime := time.Now().UnixNano()
+	//fmt.Println("MQTTPublishSinkPlan execute time " ,postTime-preTime)
 	return nil
 }
 

@@ -148,47 +148,51 @@ func (o *UnaryOperator) doOp(ctx api.StreamContext, errCh chan<- error) {
 					for i := 0; i < len(o.Oc.Data); i++ {
 						//fmt.Println("bbbbbbbbbbbbbbbbb", result, len(o.Oc.Data))
 						//for  {
-						select {
-						case result := <-o.Oc.Data:
-
-							//fmt.Println("77777777777--result", result, reflect.TypeOf(result))
-							switch val := result.(type) {
-							case nil:
-								//continue
-							case error:
-								logger.Errorf("Operation %s error: %s", ctx.GetOpId(), val)
-								o.Broadcast(val)
-								stats.IncTotalExceptions()
-								//continue
-							case []*api.DefaultSourceTuple:
-								for i := 0; i < len(val); i++ {
-									fmt.Println("i am No ", i, val[i])
-									logger.Errorf("Operation %s error: %s", ctx.GetOpId(), val[i])
-									o.Broadcast(val[i])
-									stats.IncTotalExceptions()
-								}
-								//continue
-							case []*xsql.Tuple:
-								for i := 0; i < len(val); i++ {
-									fmt.Println("i am No ", i, val[i])
-									logger.Errorf("Operation %s error: %s", ctx.GetOpId(), val[i])
-									o.Broadcast(val[i])
-									stats.IncTotalExceptions()
-								}
-								//continue
-							case *xsql.Tuple:
-								//fmt.Println("i am No ", val)
-								//logger.Errorf("Operation %s error: %s", ctx.GetOpId(), val)
-								o.Broadcast(val)
-								stats.IncTotalExceptions()
-								//continue
-							default:
-								stats.ProcessTimeEnd()
-								o.Broadcast(val)
-								stats.IncTotalRecordsOut()
-								stats.SetBufferLength(int64(len(o.input)))
-							}
-						}
+						val := <- o.Oc.Data
+						o.Broadcast(val)
+						//fmt.Println("00000000000000", o.name, len(o.input))
+						stats.IncTotalExceptions()
+						//select {
+						//case result := <-o.Oc.Data:
+						//
+						//	//fmt.Println("77777777777--result", result, reflect.TypeOf(result))
+						//	switch val := result.(type) {
+						//	case nil:
+						//		//continue
+						//	case error:
+						//		logger.Errorf("Operation %s error: %s", ctx.GetOpId(), val)
+						//		o.Broadcast(val)
+						//		stats.IncTotalExceptions()
+						//		//continue
+						//	case []*api.DefaultSourceTuple:
+						//		for i := 0; i < len(val); i++ {
+						//			fmt.Println("i am No ", i, val[i])
+						//			logger.Errorf("Operation %s error: %s", ctx.GetOpId(), val[i])
+						//			o.Broadcast(val[i])
+						//			stats.IncTotalExceptions()
+						//		}
+						//		//continue
+						//	case []*xsql.Tuple:
+						//		for i := 0; i < len(val); i++ {
+						//			fmt.Println("i am No ", i, val[i])
+						//			logger.Errorf("Operation %s error: %s", ctx.GetOpId(), val[i])
+						//			o.Broadcast(val[i])
+						//			stats.IncTotalExceptions()
+						//		}
+						//		//continue
+						//	case *xsql.Tuple:
+						//		//fmt.Println("i am No ", val)
+						//		//logger.Errorf("Operation %s error: %s", ctx.GetOpId(), val)
+						//		o.Broadcast(val)
+						//		stats.IncTotalExceptions()
+						//		//continue
+						//	default:
+						//		stats.ProcessTimeEnd()
+						//		o.Broadcast(val)
+						//		stats.IncTotalRecordsOut()
+						//		stats.SetBufferLength(int64(len(o.input)))
+						//	}
+						//}
 					}
 					//}()
 

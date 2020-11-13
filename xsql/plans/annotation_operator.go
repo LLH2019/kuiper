@@ -28,6 +28,11 @@ type AnnotationPlan struct {
  */
 func (pp *AnnotationPlan) Apply(ctx api.StreamContext, data interface{}, fv *xsql.FunctionValuer, afv *xsql.AggregateFunctionValuer, Oc *nodes.OutputController) interface{} {
 	//preTime := time.Now().UnixNano()
+
+	a := 1
+	for i:=1; i<6000; i++ {
+		a++
+	}
 	//log := ctx.GetLogger()
 	//log.Debugf("project plan receive %s", data)
 	//fmt.Println("AnnotationPlan apply pre data is ", data, reflect.TypeOf(data))
@@ -52,7 +57,9 @@ func (pp *AnnotationPlan) Apply(ctx api.StreamContext, data interface{}, fv *xsq
 		//message["SPOUTTIMESTAMP"] = message["SPOUTTIMESTAMP"]
 		//message["CHAINSTAMP"] = message["CHAINSTAMP"]
 
-
+		if line == "" {
+			message["OBSVAL"] = message["OBSVAL"].(string) + "," + "ece,digital"
+		}
 	//fmt.Println("line --- ", line, message["OBSVAL"])
 
 		//message["obsVal"] = message["obsVal"].(string)
@@ -64,9 +71,8 @@ func (pp *AnnotationPlan) Apply(ctx api.StreamContext, data interface{}, fv *xsq
 		//result := make(map[string]interface{})
 		//result["demo"] = tuple
 		//results = append(results, result)
-		if line != "" {
-			Oc.Data <- tuple
-		}
+
+		Oc.Data <- tuple
 		//msg,ok := pp.MsgIdCountMap[message["msgId"].(string)]
 		//fmt.Println("etl join msg map out ", msg, " message ", message, "ok ", ok)
 		//if ok {
@@ -104,6 +110,7 @@ func (pp *AnnotationPlan) Apply(ctx api.StreamContext, data interface{}, fv *xsq
 	//}
 
 	//fmt.Println("AnnotationPlan apply post data is ", tuple)
+
 
 	//postTime := time.Now().UnixNano()
 	//fmt.Println("AnnotationPlan execute time " ,postTime-preTime)

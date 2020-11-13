@@ -120,21 +120,25 @@ func (m *SourceNode) Open(ctx api.StreamContext, errCh chan<- error) {
 					}
 				}
 
-				buffer := NewDynamicChannelBuffer()
+				//buffer := NewDynamicChannelBuffer()
+				buffer := NewStaticChannelBuffer()
 				buffer.SetLimit(bl)
 				sourceErrCh := make(chan error)
-				go source.Open(ctx.WithInstance(instance), buffer.In, sourceErrCh)
+				go source.Open(ctx.WithInstance(instance), buffer.Buffers, sourceErrCh)
 				logger.Infof("Start source %s instance %d successfully", m.name, instance)
 				for {
 					select {
 					case <-ctx.Done():
+						fmt.Println("source_node----------11111")
 						logger.Infof("source %s done", m.name)
 						m.close(ctx, logger)
 						return
 					case err := <-sourceErrCh:
+						fmt.Println("source_node----------22222")
 						m.drainError(errCh, err, ctx, logger)
 						return
-					case data := <-buffer.Out:
+					case data := <-buffer.Buffers:
+						//fmt.Println("source_node----------33333", buffer.GetLength())
 						stats.IncTotalRecordsIn()
 						stats.ProcessTimeStart()
 						tuple := &xsql.Tuple{Emitter: m.name, Message: data.Message(), Timestamp: common.GetNowInMilli(), Metadata: data.Meta()}
@@ -156,7 +160,11 @@ func (m *SourceNode) Open(ctx api.StreamContext, errCh chan<- error) {
 							}
 						}
 						logger.Debugf("%s consume data %v complete", m.name, tuple)
+
+					//default:
+					//	fmt.Println("source_node----------44444")
 					}
+
 				}
 			}(i)
 		}

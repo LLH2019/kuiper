@@ -2,11 +2,34 @@ package nodes
 
 import "github.com/emqx/kuiper/xstream/api"
 
+
+type StaticChannelBuffer struct {
+	Buffers chan api.SourceTuple
+	limit int
+}
+
+func NewStaticChannelBuffer () *StaticChannelBuffer{
+	buffer := &StaticChannelBuffer{
+		Buffers: make(chan api.SourceTuple, 20480),
+	}
+	return buffer
+}
+
 type DynamicChannelBuffer struct {
 	In     chan api.SourceTuple
 	Out    chan api.SourceTuple
 	buffer []api.SourceTuple
 	limit  int
+}
+
+func (b *StaticChannelBuffer) SetLimit(limit int) {
+	if limit > 0 {
+		b.limit = limit
+	}
+}
+
+func (b *StaticChannelBuffer) GetLength() int {
+	return len(b.Buffers)
 }
 
 func NewDynamicChannelBuffer() *DynamicChannelBuffer {
